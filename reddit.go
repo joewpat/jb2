@@ -1,4 +1,4 @@
-package reddit
+package main
 
 import (
 	"encoding/json"
@@ -46,21 +46,15 @@ type RedditComment struct {
 	} `json:"data"`
 }
 
-func comment() {
-	s := searchReddit("ass")
+//the primary function - searches reddit for a comment based on text query
+func getRedditComment(t string) string {
+	s := searchReddit(t)
 	time.Sleep(time.Second * 1) // delays are in place to satisfy API requirements (max 60req/min)
 	rand.Seed(time.Now().Unix())
 	randomPost := s.Data.Children[rand.Intn(len(s.Data.Children))]
 	url := "https://reddit.com/" + randomPost.Data.Permalink + ".json"
-	//	fmt.Println(randomPost.Data.URL)
-	//	fmt.Println(randomPost.Data.Permalink)
 	rc := getComments(url)
-
-	randomThread := rc[rand.Intn(len(rc))].Data.Children
-	randomComment := randomThread[rand.Intn(len(randomThread))].Data.Body
-
-	return randomComment
-
+	return getRandomComment(rc)
 }
 
 // searchreddit searches reddit for content based on text query and returns a RedditResponse struct
@@ -105,13 +99,10 @@ func getComments(url string) []RedditComment {
 
 //getRandomComment takes a slice of threads and returns a random RedditComment
 func getRandomComment(r []RedditComment) string {
-	for {
-		randomThread := r[rand.Intn(len(r))].Data.Children
-		randomComment := randomThread[rand.Intn(len(randomThread))].Data.Body
-		if randomComment != "" {
-			break
-		}
-		return randomComment
+	comment := ""
+	for comment == "" {
+		thread := r[rand.Intn(len(r))].Data.Children
+		comment = thread[rand.Intn(len(thread))].Data.Body
 	}
-
+	return comment
 }
