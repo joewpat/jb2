@@ -37,7 +37,7 @@ type YoutubeResponse struct {
 	}
 }
 
-func main() {
+func youtube() {
 	yt := searchYT("butt")
 	for _, y := range yt.Items {
 		fmt.Println(y.ID.VideoID)

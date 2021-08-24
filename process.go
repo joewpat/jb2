@@ -16,6 +16,6 @@ func processText(t string) string {
 		return "error with regex"
 	}
 	processedString := reg.ReplaceAllString(t, "")
-	answer := getRedditComment(processedString)
-	return answer
+	r := getRedditComment(processedString)
+	return r
 }
