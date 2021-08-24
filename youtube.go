@@ -45,7 +45,7 @@ func youtube() {
 }
 
 func searchYT(query string) YoutubeResponse {
-	yt_api_key := "AIzaSyDdTaCfsKc7tfpNMMzP4whQ-BipKN0SVI0"
+	yt_api_key := "asdf"
 	url := "https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&q=" + query + "&key=" + yt_api_key
 	client := &http.Client{Timeout: 3 * time.Second}
 	req, _ := http.NewRequest("GET", url, nil)
