@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 )
 
@@ -16,6 +17,12 @@ func processText(t string) string {
 		return "error with regex"
 	}
 	processedString := reg.ReplaceAllString(t, "")
-	r := getRedditComment(processedString)
-	return r
+	//r := getRedditComment(processedString)
+	y := searchYT(processedString)
+	if len(y.Items) >= 1 {
+		return y.Items[0].ID.VideoID
+	}
+	fmt.Println(y)
+	fmt.Println(len(y.Items))
+	return "no vid"
 }
