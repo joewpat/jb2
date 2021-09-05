@@ -23,9 +23,11 @@ func main() {
 		}
 		if strings.Compare("hi", text) == 0 {
 			fmt.Println("hello, Yourself")
+		} else {
+			fmt.Println(text)
+			resp := processText(text)
+			fmt.Println(resp)
 		}
 
-		resp := processText(text)
-		fmt.Println(resp)
 	}
 }
