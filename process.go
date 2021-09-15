@@ -14,7 +14,7 @@ func processText(t string) string {
 	t = strings.Replace(t, " ", "+", -1)
 	r := getRedditComment(t)
 	y := youtube(t)
-	fmt.Println("youtube: ", y)
+	fmt.Println("youtube:", y)
 	fmt.Println("reddit:", r)
 	return "done"
 }
