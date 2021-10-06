@@ -63,9 +63,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if strings.HasPrefix(m.Content, "jb2 ") {
-		fmt.Println("triggered", m.Content[4:])
-		text := m.Content[4:]
+	if strings.HasPrefix(m.Content, "jb ") {
+		fmt.Println("triggered", m.Content[3:])
+		text := m.Content[3:]
 		resp := processText(text)
 		fmt.Println(resp)
 		s.ChannelMessageSend(m.ChannelID, resp)
