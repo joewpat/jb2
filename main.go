@@ -58,7 +58,6 @@ func main() {
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Ignore all messages created by the bot itself
-	// This isn't required in this specific example but it's a good practice.
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
@@ -67,7 +66,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		fmt.Println("triggered", m.Content[3:])
 		text := m.Content[3:]
 		resp := processText(text)
-		fmt.Println(resp)
+		fmt.Println("Final Reply: \n", resp+"\n")
 		s.ChannelMessageSend(m.ChannelID, resp)
 	}
 }

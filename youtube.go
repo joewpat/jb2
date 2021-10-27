@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -117,7 +118,10 @@ func youtube(query string) string {
 	for _, y := range yt.Items {
 		comments := getYTcomment(y.ID.VideoID)
 		for _, x := range comments.Items {
-			return x.Snippet.TopLevelComment.Snippet.TextDisplay
+			z := x.Snippet.TopLevelComment.Snippet.TextDisplay
+			if strings.Contains(z, "http") == false {
+				return x.Snippet.TopLevelComment.Snippet.TextDisplay
+			}
 		}
 	}
 	return query

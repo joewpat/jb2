@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -49,6 +50,9 @@ type RedditComment struct {
 //the primary function - searches reddit for a comment based on text query
 func getRedditComment(t string) string {
 	s := searchReddit(t)
+	if len(s.Data.Children) < 1 {
+		return "error - no reddit comment found"
+	}
 	time.Sleep(time.Second * 1) // delays are in place to satisfy API requirements (max 60req/min)
 	rand.Seed(time.Now().Unix())
 	randomPost := s.Data.Children[rand.Intn(len(s.Data.Children))]
@@ -60,7 +64,7 @@ func getRedditComment(t string) string {
 // searchreddit searches reddit for content based on text query and returns a RedditResponse struct
 func searchReddit(query string) RedditResponse {
 	//build http client and request
-	url := "https://www.reddit.com/search.json?q=" + query + "&include_over_18=on&sort=relevance&t=all"
+	url := "https://www.reddit.com/search.json?q=" + query + "&include_over_18=on&sort=comments&t=all"
 	client := &http.Client{Timeout: 3 * time.Second}
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("User-Agent", "Golang_Reddit_Bot/0.1 by /u/Robert_Arctor")
@@ -73,7 +77,7 @@ func searchReddit(query string) RedditResponse {
 	var r RedditResponse
 	err = json.NewDecoder(resp.Body).Decode(&r)
 	if err != nil {
-		panic(err)
+		fmt.Println("ERROR - ", err)
 	}
 	return r
 }
@@ -88,7 +92,6 @@ func getComments(url string) []RedditComment {
 		fmt.Println(err)
 	}
 	defer resp.Body.Close()
-
 	var r []RedditComment
 	err = json.NewDecoder(resp.Body).Decode(&r)
 	if err != nil {
@@ -101,6 +104,12 @@ func getComments(url string) []RedditComment {
 func getRandomComment(r []RedditComment) string {
 	comment := ""
 	for comment == "" {
+		thread := r[rand.Intn(len(r))].Data.Children
+		comment = thread[rand.Intn(len(thread))].Data.Body
+
+	}
+	for strings.Contains(comment, "https") {
+		fmt.Println("ignored comment for containing hyperlink: ", comment)
 		thread := r[rand.Intn(len(r))].Data.Children
 		comment = thread[rand.Intn(len(thread))].Data.Body
 	}

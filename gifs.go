@@ -69,6 +69,10 @@ func searchGiphy(query string) string {
 		}
 		rand.Seed(time.Now().Unix()) // initialize pseudo random generator
 		fmt.Println("giphy - number of results: ", len(data.Data))
+		if len(data.Data) < 1 {
+			fmt.Println("giphy returned 0 search results")
+			return "error - giphy returned 0 search results"
+		}
 		randResult := data.Data[rand.Intn(len(data.Data))].URL
 		return randResult
 	} else {
@@ -102,6 +106,10 @@ func searchTenor(query string) string {
 		}
 		rand.Seed(time.Now().Unix()) // initialize pseudo random generator
 		fmt.Println("tenor - number of results: ", len(data.Results))
+		if len(data.Results) < 1 {
+			fmt.Println("tenor returned 0 search results")
+			return "error - tenor returned 0 search results"
+		}
 		randResult := data.Results[rand.Intn(len(data.Results))].Media[0].Gif.URL
 		return randResult
 	} else {

@@ -21,8 +21,16 @@ func processText(t string) string {
 		tenor := searchTenor(t)
 		giphy := searchGiphy(t)
 		var responses []string
-		responses = append(responses, tenor, giphy)
-		return responses[rand.Intn(len(responses))]
+		if strings.HasPrefix(tenor, "http") {
+			responses = append(responses, tenor)
+		}
+		if strings.HasPrefix(giphy, "http") {
+			responses = append(responses, giphy)
+		}
+		if len(responses) > 0 {
+			return responses[rand.Intn(len(responses))]
+		}
+		return "error - no gifs found"
 	}
 	if strings.HasPrefix(t, "time") {
 		time := time.Now()
