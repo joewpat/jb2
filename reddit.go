@@ -51,12 +51,12 @@ type RedditComment struct {
 func getRedditComment(t string) string {
 	s := searchReddit(t)
 	if len(s.Data.Children) < 1 {
-		return "error - no reddit comment found"
+		return "jberror - no reddit comment found"
 	}
 	time.Sleep(time.Second * 1) // delays are in place to satisfy API requirements (max 60req/min)
 	rand.Seed(time.Now().Unix())
 	randomPost := s.Data.Children[rand.Intn(len(s.Data.Children))]
-	url := "https://reddit.com/" + randomPost.Data.Permalink + ".json"
+	url := "https://reddit.com" + randomPost.Data.Permalink + ".json"
 	rc := getComments(url)
 	return getRandomComment(rc)
 }

@@ -15,6 +15,7 @@ func processText(t string) string {
 	if t == "" {
 		return "error - blank search query"
 	}
+	fmt.Println("query: ", t)
 	if strings.HasPrefix(t, "gif ") {
 		text := t[5:]
 		t = strings.Replace(text, " ", "+", -1)
@@ -44,8 +45,18 @@ func processText(t string) string {
 	var responses []string
 	r := getRedditComment(t)
 	y := youtube(t)
-	responses = append(responses, r, y)
+	if strings.HasPrefix(r, "jberror") {
+	} else {
+		responses = append(responses, r)
+	}
+	if strings.HasPrefix(y, "jberror") {
+	} else {
+		responses = append(responses, y)
+	}
 	fmt.Println("youtube:", y)
 	fmt.Println("reddit:", r)
-	return responses[rand.Intn(len(responses))]
+	if len(responses) > 0 {
+		return responses[rand.Intn(len(responses))]
+	}
+	return "jberror - no responses found for query: " + t
 }

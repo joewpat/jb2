@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -66,6 +67,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		fmt.Println("triggered", m.Content[3:])
 		text := m.Content[3:]
 		resp := processText(text)
+		resp = html.UnescapeString(resp)
 		fmt.Println("Final Reply: \n", resp+"\n")
 		s.ChannelMessageSend(m.ChannelID, resp)
 	}

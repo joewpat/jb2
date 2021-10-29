@@ -124,7 +124,7 @@ func youtube(query string) string {
 			}
 		}
 	}
-	return query
+	return "jberror - no youtube comment found"
 }
 
 func searchYT(query string) YoutubeResponse {
