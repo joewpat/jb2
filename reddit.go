@@ -55,16 +55,49 @@ func getRedditComment(t string) string {
 	}
 	time.Sleep(time.Second * 1) // delays are in place to satisfy API requirements (max 60req/min)
 	rand.Seed(time.Now().Unix())
-	randomPost := s.Data.Children[rand.Intn(len(s.Data.Children))]
+	randomPost := s.Data.Children[rand.Intn(len(s.Data.Children))] //pull random post from the results
 	url := "https://reddit.com" + randomPost.Data.Permalink + ".json"
 	rc := getComments(url)
 	return getRandomComment(rc)
 }
 
 // searchreddit searches reddit for content based on text query and returns a RedditResponse struct
+
+type RedditResponse struct {
+	Kind string `json:"kind"`
+	Data struct {
+		Children []struct {
+			Kind string `json:"kind"`
+			Data struct {
+				SubredditID string `json:"subreddit_id"`
+				Permalink   string `json:"permalink"`
+				URL         string `json:"URL"`
+				NumComments int    `json:"num_comments"`
+				ID          string `json:"id"`
+			} `json:"data,omitempty"`
+		} `json:"children"`
+	} `json:"data"`
+}
+
+type RedditComment struct {
+	Kind string `json:"kind"`
+	Data struct {
+		Children []struct {
+			Kind string `json:"kind"`
+			Data struct {
+				Body        string `json:"body"`
+				Author      string `json:"author"`
+				URL         string `json:"URL"`
+				NumComments int    `json:"num_comments"`
+				ID          string `json:"id"`
+			} `json:"data,omitempty"`
+		} `json:"children"`
+	} `json:"data"`
+}
+
 func searchReddit(query string) RedditResponse {
 	//build http client and request
-	url := "https://www.reddit.com/search.json?q=" + query + "&include_over_18=on&sort=comments&t=all"
+	url := "https://www.reddit.com/search.json?q=" + query + "&include_over_18=on&limit=50"
 	client := &http.Client{Timeout: 3 * time.Second}
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("User-Agent", "Golang_Reddit_Bot/0.1 by /u/Robert_Arctor")
