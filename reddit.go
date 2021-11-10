@@ -62,39 +62,6 @@ func getRedditComment(t string) string {
 }
 
 // searchreddit searches reddit for content based on text query and returns a RedditResponse struct
-
-type RedditResponse struct {
-	Kind string `json:"kind"`
-	Data struct {
-		Children []struct {
-			Kind string `json:"kind"`
-			Data struct {
-				SubredditID string `json:"subreddit_id"`
-				Permalink   string `json:"permalink"`
-				URL         string `json:"URL"`
-				NumComments int    `json:"num_comments"`
-				ID          string `json:"id"`
-			} `json:"data,omitempty"`
-		} `json:"children"`
-	} `json:"data"`
-}
-
-type RedditComment struct {
-	Kind string `json:"kind"`
-	Data struct {
-		Children []struct {
-			Kind string `json:"kind"`
-			Data struct {
-				Body        string `json:"body"`
-				Author      string `json:"author"`
-				URL         string `json:"URL"`
-				NumComments int    `json:"num_comments"`
-				ID          string `json:"id"`
-			} `json:"data,omitempty"`
-		} `json:"children"`
-	} `json:"data"`
-}
-
 func searchReddit(query string) RedditResponse {
 	//build http client and request
 	url := "https://www.reddit.com/search.json?q=" + query + "&include_over_18=on&limit=50"
