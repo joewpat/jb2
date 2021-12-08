@@ -17,7 +17,8 @@ func processText(t string) string {
 	}
 	fmt.Println("query: ", t)
 	if strings.HasPrefix(t, "gif ") {
-		text := t[5:]
+		text := t[4:]
+		fmt.Println("searching for gifs, query: ", text)
 		t = strings.Replace(text, " ", "+", -1)
 		tenor := searchTenor(t)
 		giphy := searchGiphy(t)
@@ -58,5 +59,5 @@ func processText(t string) string {
 	if len(responses) > 0 {
 		return responses[rand.Intn(len(responses))]
 	}
-	return "jberror - no responses found for query: " + t
+	return "error - no responses found for query: " + t
 }

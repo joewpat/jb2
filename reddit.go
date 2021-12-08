@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"io/ioutil"
 )
 
 //	https://stackoverflow.com/questions/17156371/how-to-get-json-response-from-http-get
@@ -47,18 +49,31 @@ type RedditComment struct {
 	} `json:"data"`
 }
 
+func readUserAgentString() string {
+	key, err := ioutil.ReadFile("reddit.ua.string")
+	if err != nil {
+		panic(err)
+	}
+	return string(key)
+}
+
 //the primary function - searches reddit for a comment based on text query
 func getRedditComment(t string) string {
 	s := searchReddit(t)
 	if len(s.Data.Children) < 1 {
-		return "jberror - no reddit comment found"
+		return "jberror - no reddit content found"
 	}
 	time.Sleep(time.Second * 1) // delays are in place to satisfy API requirements (max 60req/min)
 	rand.Seed(time.Now().Unix())
 	randomPost := s.Data.Children[rand.Intn(len(s.Data.Children))] //pull random post from the results
 	url := "https://reddit.com" + randomPost.Data.Permalink + ".json"
 	rc := getComments(url)
-	return getRandomComment(rc)
+	fmt.Println("reddit comments found: ", len(rc))
+	if len(rc) > 0 {
+		return getRandomComment(rc)
+	} else {
+		return ""
+	}
 }
 
 // searchreddit searches reddit for content based on text query and returns a RedditResponse struct
@@ -86,7 +101,8 @@ func searchReddit(query string) RedditResponse {
 func getComments(url string) []RedditComment {
 	client := &http.Client{Timeout: 5 * time.Second}
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", "Golang_Reddit_Bot/0.1 by /u/Robert_Arctor")
+	uastring := readUserAgentString()
+	req.Header.Set("User-Agent", uastring)
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
@@ -104,8 +120,19 @@ func getComments(url string) []RedditComment {
 func getRandomComment(r []RedditComment) string {
 	comment := ""
 	for comment == "" {
-		thread := r[rand.Intn(len(r))].Data.Children
-		comment = thread[rand.Intn(len(thread))].Data.Body
+		if len(r) > 1 {
+			thread := r[rand.Intn(len(r))].Data.Children
+			if len(thread) > 1 {
+				comment = thread[rand.Intn(len(thread))].Data.Body
+			}
+			comment = thread[0].Data.Body
+		} else {
+			thread := r[0].Data.Children
+			if len(thread) > 1 {
+				comment = thread[rand.Intn(len(thread))].Data.Body
+			}
+			comment = thread[0].Data.Body
+		}
 
 	}
 	for strings.Contains(comment, "https") {
