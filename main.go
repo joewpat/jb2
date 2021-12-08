@@ -19,6 +19,9 @@ func readDiscordKey() string {
 	if err != nil {
 		panic(err)
 	}
+	if strings.HasSuffix('\n') {
+		key == key[:len(key)-2]
+	}
 	return string(key)
 }
 
