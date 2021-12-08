@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/signal"
 	"strings"
@@ -21,7 +22,17 @@ func readDiscordKey() string {
 }
 
 func main() {
+
+	//create a simple listner on port 8080 to satisfy DigitalOcean's health checks
+	n := "tcp"
+	l, err := net.Listen(n, "localhost:8080")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer l.Close()
+
 	var token = readDiscordKey()
+	//removing newline character if added from env variables
 	token = strings.TrimSuffix(token, "\n")
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + token)
@@ -51,6 +62,12 @@ func main() {
 
 	// Cleanly close down the Discord session.
 	dg.Close()
+	for {
+		_, err := l.Accept()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 }
 
 // This function will be called (due to AddHandler above) every time a new
