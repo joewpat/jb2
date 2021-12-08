@@ -12,8 +12,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var token = readDiscordKey()
-
 func readDiscordKey() string {
 	key, err := ioutil.ReadFile("discord.token")
 	if err != nil {
@@ -23,7 +21,8 @@ func readDiscordKey() string {
 }
 
 func main() {
-
+	var token = readDiscordKey()
+	token = strings.TrimSuffix(token, "\n")
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
