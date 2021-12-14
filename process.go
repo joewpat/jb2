@@ -38,6 +38,9 @@ func processText(t string) string {
 		time := time.Now()
 		return time.Local().String()
 	}
+	if strings.HasPrefix(t, "bible") {
+		return getBibleVerse()
+	}
 	if t == "surf" {
 		r := getSurfReport()
 		return r

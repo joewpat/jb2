@@ -68,7 +68,6 @@ func getRedditComment(t string) string {
 	randomPost := s.Data.Children[rand.Intn(len(s.Data.Children))] //pull random post from the results
 	url := "https://reddit.com" + randomPost.Data.Permalink + ".json"
 	rc := getComments(url)
-	fmt.Println("reddit comments found: ", len(rc))
 	if len(rc) > 0 {
 		return getRandomComment(rc)
 	} else {
@@ -80,7 +79,7 @@ func getRedditComment(t string) string {
 func searchReddit(query string) RedditResponse {
 	//build http client and request
 	url := "https://www.reddit.com/search.json?q=" + query + "&include_over_18=on&limit=50"
-	client := &http.Client{Timeout: 3 * time.Second}
+	client := &http.Client{Timeout: 5 * time.Second} //set this to 5 seconds due to reddit being slow
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("User-Agent", "Golang_Reddit_Bot/0.1 by /u/Robert_Arctor")
 	resp, err := client.Do(req)
@@ -120,7 +119,7 @@ func getComments(url string) []RedditComment {
 func getRandomComment(r []RedditComment) string {
 	comment := ""
 	for comment == "" {
-		if len(r) > 1 {
+		if len(r) > 0 {
 			thread := r[rand.Intn(len(r))].Data.Children
 			if len(thread) > 1 {
 				comment = thread[rand.Intn(len(thread))].Data.Body
