@@ -124,18 +124,20 @@ func youtube(query string) string {
 			}
 		}
 	}
-	return "jberror - no youtube comment found"
+	return "..."
 }
 
 func searchYT(query string) YoutubeResponse {
 	key := readKey()
 	url := "https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&q=" + query + "&key=" + string(key)
+	fmt.Println("searching youtube: ", url)
 	client := &http.Client{Timeout: 3 * time.Second}
 	req, _ := http.NewRequest("GET", url, nil)
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println("Youtube response code: ", resp.Status)
 	defer resp.Body.Close()
 	var y YoutubeResponse
 	err = json.NewDecoder(resp.Body).Decode(&y)

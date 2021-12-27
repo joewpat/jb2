@@ -25,9 +25,11 @@ func processText(t string) string {
 		var responses []string
 		if strings.HasPrefix(tenor, "http") {
 			responses = append(responses, tenor)
+			fmt.Println("response from tenor: ", tenor)
 		}
 		if strings.HasPrefix(giphy, "http") {
 			responses = append(responses, giphy)
+			fmt.Println("response from giphy: ", giphy)
 		}
 		if len(responses) > 0 {
 			return responses[rand.Intn(len(responses))]
@@ -49,11 +51,11 @@ func processText(t string) string {
 	var responses []string
 	r := getRedditComment(t)
 	y := youtube(t)
-	if strings.HasPrefix(r, "jberror") {
+	if r == "" {
 	} else {
 		responses = append(responses, r)
 	}
-	if strings.HasPrefix(y, "jberror") {
+	if y == "..." {
 	} else {
 		responses = append(responses, y)
 	}

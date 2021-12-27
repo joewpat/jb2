@@ -61,7 +61,8 @@ func readUserAgentString() string {
 func getRedditComment(t string) string {
 	s := searchReddit(t)
 	if len(s.Data.Children) < 1 {
-		return "jberror - no reddit content found"
+		fmt.Println("did not find  ")
+		return "" //if nothing is found from reddit return nothing instead of panic
 	}
 	time.Sleep(time.Second * 1) // delays are in place to satisfy API requirements (max 60req/min)
 	rand.Seed(time.Now().Unix())
@@ -78,10 +79,11 @@ func getRedditComment(t string) string {
 // searchreddit searches reddit for content based on text query and returns a RedditResponse struct
 func searchReddit(query string) RedditResponse {
 	//build http client and request
+	uaString := readUserAgentString()
 	url := "https://www.reddit.com/search.json?q=" + query + "&include_over_18=on&limit=50"
-	client := &http.Client{Timeout: 5 * time.Second} //set this to 5 seconds due to reddit being slow
+	client := &http.Client{Timeout: 7 * time.Second} //set this to 5 seconds due to reddit being slow
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", "Golang_Reddit_Bot/0.1 by /u/Robert_Arctor")
+	req.Header.Set("User-Agent", uaString)
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
@@ -98,7 +100,7 @@ func searchReddit(query string) RedditResponse {
 
 //func getComment takes a reddit post id and returns a slice of comments
 func getComments(url string) []RedditComment {
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := &http.Client{Timeout: 7 * time.Second}
 	req, _ := http.NewRequest("GET", url, nil)
 	uastring := readUserAgentString()
 	req.Header.Set("User-Agent", uastring)
@@ -120,24 +122,28 @@ func getRandomComment(r []RedditComment) string {
 	comment := ""
 	for comment == "" {
 		if len(r) > 0 {
+			fmt.Println(r)
 			thread := r[rand.Intn(len(r))].Data.Children
+			fmt.Println("selected thread", thread[0].Data.NumComments)
 			if len(thread) > 1 {
 				comment = thread[rand.Intn(len(thread))].Data.Body
+				fmt.Println("selected comment: ", comment)
 			}
-			comment = thread[0].Data.Body
 		} else {
 			thread := r[0].Data.Children
 			if len(thread) > 1 {
 				comment = thread[rand.Intn(len(thread))].Data.Body
+			} else {
+				comment = "..."
 			}
-			comment = thread[0].Data.Body
 		}
-
 	}
+
 	for strings.Contains(comment, "https") {
 		fmt.Println("ignored comment for containing hyperlink: ", comment)
 		thread := r[rand.Intn(len(r))].Data.Children
 		comment = thread[rand.Intn(len(thread))].Data.Body
+		fmt.Println(comment)
 	}
 	return comment
 }
