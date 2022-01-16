@@ -37,8 +37,9 @@ func processText(t string) string {
 		return "error - no gifs found"
 	}
 	if strings.HasPrefix(t, "time") {
-		time := time.Now()
-		return time.Local().String()
+		loc := time.FixedZone("UTC-5", -5*60*60)
+		time := time.Now().In(loc)
+		return time.String()
 	}
 	if strings.HasPrefix(t, "bible") {
 		return getBibleVerse()
@@ -51,12 +52,10 @@ func processText(t string) string {
 	var responses []string
 	r := getRedditComment(t)
 	y := youtube(t)
-	if r == "" {
-	} else {
+	if r != "" {
 		responses = append(responses, r)
 	}
-	if y == "..." {
-	} else {
+	if y != "" {
 		responses = append(responses, y)
 	}
 	fmt.Println("youtube:", y)

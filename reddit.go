@@ -11,12 +11,6 @@ import (
 	"io/ioutil"
 )
 
-//	https://stackoverflow.com/questions/17156371/how-to-get-json-response-from-http-get
-//	fmt.Println("Permalink: ", r.Data.Children[1].Data.Permalink)
-//	RedditResponse struct hold relevant response data from reddit api JSON response
-//	get one comment example
-//	fmt.Println(r[1].Data.Children[1].Data.Body)
-
 type RedditResponse struct {
 	Kind string `json:"kind"`
 	Data struct {
@@ -57,11 +51,11 @@ func readUserAgentString() string {
 	return string(key)
 }
 
-//the primary function - searches reddit for a comment based on text query
+//getRedditComment searches reddit for a comment based on text query
 func getRedditComment(t string) string {
 	s := searchReddit(t)
 	if len(s.Data.Children) < 1 {
-		fmt.Println("did not find  ")
+		fmt.Println("did not find reddit material")
 		return "" //if nothing is found from reddit return nothing instead of panic
 	}
 	time.Sleep(time.Second * 1) // delays are in place to satisfy API requirements (max 60req/min)
@@ -76,21 +70,21 @@ func getRedditComment(t string) string {
 	}
 }
 
-// searchreddit searches reddit for content based on text query and returns a RedditResponse struct
+//searchreddit searches reddit for content based on text query and returns a RedditResponse struct
 func searchReddit(query string) RedditResponse {
 	//build http client and request
+	var r RedditResponse
 	uaString := readUserAgentString()
-	url := "https://www.reddit.com/search.json?q=" + query + "&include_over_18=on&limit=50"
-	client := &http.Client{Timeout: 7 * time.Second} //set this to 5 seconds due to reddit being slow
+	url := "https://www.reddit.com/search.json?q=" + query + "&include_over_18=on&limit=5"
+	client := &http.Client{Timeout: 5 * time.Second}
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("User-Agent", uaString)
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
+		return r //return blank response if there's an error with the web request
 	}
 	defer resp.Body.Close()
-	//fmt.Println(resp.Status) - log this instead
-	var r RedditResponse
 	err = json.NewDecoder(resp.Body).Decode(&r)
 	if err != nil {
 		fmt.Println("ERROR - ", err)
@@ -98,7 +92,7 @@ func searchReddit(query string) RedditResponse {
 	return r
 }
 
-//func getComment takes a reddit post id and returns a slice of comments
+//getComment takes a reddit post id and returns a slice of comments
 func getComments(url string) []RedditComment {
 	client := &http.Client{Timeout: 7 * time.Second}
 	req, _ := http.NewRequest("GET", url, nil)
@@ -120,26 +114,23 @@ func getComments(url string) []RedditComment {
 //getRandomComment takes a slice of threads and returns a random RedditComment
 func getRandomComment(r []RedditComment) string {
 	comment := ""
-	for comment == "" {
-		if len(r) > 0 {
-			fmt.Println(r)
-			thread := r[rand.Intn(len(r))].Data.Children
-			fmt.Println("selected thread", thread[0].Data.NumComments)
-			if len(thread) > 1 {
-				comment = thread[rand.Intn(len(thread))].Data.Body
-				fmt.Println("selected comment: ", comment)
-			}
-		} else {
-			thread := r[0].Data.Children
-			if len(thread) > 1 {
-				comment = thread[rand.Intn(len(thread))].Data.Body
-			} else {
-				comment = "..."
-			}
+	if len(r) > 0 {
+		fmt.Println(r)
+		thread := r[rand.Intn(len(r))].Data.Children
+		fmt.Println("selected thread", thread[0].Data.NumComments)
+		if len(thread) > 1 {
+			comment = thread[rand.Intn(len(thread))].Data.Body
+			fmt.Println("selected comment: ", comment)
+		}
+	} else {
+		thread := r[0].Data.Children
+		if len(thread) > 1 {
+			comment = thread[rand.Intn(len(thread))].Data.Body
+			fmt.Println("selected reddit comment, : ", comment)
 		}
 	}
 
-	for strings.Contains(comment, "https") {
+	if strings.Contains(comment, "https") {
 		fmt.Println("ignored comment for containing hyperlink: ", comment)
 		thread := r[rand.Intn(len(r))].Data.Children
 		comment = thread[rand.Intn(len(thread))].Data.Body
