@@ -6,9 +6,18 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"regexp"
 	"strings"
 	"time"
 )
+
+const regex = `<.*?>`
+
+// This method uses a regular expresion to remove HTML tags.
+func stripHtmlRegex(s string) string {
+	r := regexp.MustCompile(regex)
+	return r.ReplaceAllString(s, "")
+}
 
 func processText(t string) string {
 	rand.Seed(time.Now().UnixNano()) //init random
@@ -48,20 +57,6 @@ func processText(t string) string {
 		r := getSurfReport()
 		return r
 	}
-	t = strings.Replace(t, " ", "+", -1)
-	var responses []string
-	r := getRedditComment(t)
-	y := youtube(t)
-	if r != "" {
-		responses = append(responses, r)
-	}
-	if y != "" {
-		responses = append(responses, y)
-	}
-	fmt.Println("youtube:", y)
-	fmt.Println("reddit:", r)
-	if len(responses) > 0 {
-		return responses[rand.Intn(len(responses))]
-	}
-	return "error - no responses found for query: " + t
+	return jb(t)
+	//return "error - no responses found for query: " + t
 }

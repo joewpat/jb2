@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"html"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"os/signal"
 	"strings"
@@ -63,24 +63,28 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			s.ChannelTyping(m.ChannelID)
 		}()
 		resp := processText(text)
-		resp = html.UnescapeString(resp)
 		fmt.Println("Final Reply: \n", resp+"\n")
 		s.ChannelMessageSend(m.ChannelID, resp)
 	}
 }
 
 func onReady(s *discordgo.Session, r *discordgo.Ready) {
-	testChannel := "716083032188256308"
-	s.ChannelMessageSend(testChannel, "I have been redeployed.")
+	var token = readDiscordKey()
+	logChannel := "932392855471788112"
+	s.ChannelMessageSend(logChannel, "I have been redeployed.")
+	dailyMessage(token, logChannel)
 }
 
 //runs daily for the motivational message
 func dailyMessage(token string, channelID string) {
+	var quotes []string
 	dg, _ := discordgo.New("Bot " + token)
 	_ = dg.Open()
 	fmt.Println("Daily message triggered.")
-	bquote := getBibleVerse() + "\n:pray:"
-	message := "Good morning friends! The theme of today is:\n" + bquote
+	bquote := getBibleVerse()
+	deepthought := getDeepThought()
+	quotes = append(quotes, bquote, deepthought)
+	message := "Good morning friends! The theme of today is:\n" + quotes[rand.Intn(len(quotes))]
 	dg.ChannelMessageSend(channelID, message)
 }
 
