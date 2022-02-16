@@ -54,7 +54,8 @@ func processText(t string) string {
 		return getBibleVerse()
 	}
 	if t == "surf" {
-		r := getSurfReport()
+		sf := getSurflineForecast()
+		r := parseForecast(sf)
 		return r
 	}
 	return jb(t)

@@ -69,10 +69,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func onReady(s *discordgo.Session, r *discordgo.Ready) {
-	var token = readDiscordKey()
 	logChannel := "932392855471788112"
 	s.ChannelMessageSend(logChannel, "I have been redeployed.")
-	dailyMessage(token, logChannel)
 }
 
 //runs daily for the motivational message
