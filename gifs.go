@@ -46,7 +46,7 @@ func readGiphyKey() string {
 
 func searchGiphy(query string) string {
 	giphyKey := readGiphyKey()
-	url := "http://api.giphy.com/v1/gifs/search?q=" + query + "&api_key=" + giphyKey + "&limit=7"
+	url := "http://api.giphy.com/v1/gifs/search?q=" + query + "&api_key=" + giphyKey + "&limit=50"
 	fmt.Println("searching giphy: ", url)
 	client := &http.Client{Timeout: 3 * time.Second}
 	req, _ := http.NewRequest("GET", url, nil)
@@ -84,7 +84,7 @@ func searchGiphy(query string) string {
 
 func searchTenor(query string) string {
 	tenorKey := readTenorKey()
-	url := "https://g.tenor.com/v1/search?q=" + query + "&key=" + tenorKey + "&limit=7"
+	url := "https://g.tenor.com/v1/search?q=" + query + "&key=" + tenorKey + "&limit=50"
 	fmt.Println("searching tenor: ", url)
 	client := &http.Client{Timeout: 3 * time.Second}
 	req, _ := http.NewRequest("GET", url, nil)
