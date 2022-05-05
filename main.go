@@ -62,7 +62,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		go func() {
 			s.ChannelTyping(m.ChannelID)
 		}()
-		resp := processText(text)
+		resp := processText(text,m.Message,s)
 		fmt.Println("Final Reply: \n", resp+"\n")
 		s.ChannelMessageSend(m.ChannelID, resp)
 	} else if strings.Contains(strings.ToLower(m.Content), "another one") {
