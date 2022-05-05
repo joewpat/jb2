@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"github.com/bwmarrin/discordgo"
 )
 
 const regex = `<.*?>`
@@ -19,7 +20,7 @@ func stripHtmlRegex(s string) string {
 	return r.ReplaceAllString(s, "")
 }
 
-func processText(t string) string {
+func processText(t string, m *discordgo.Message, session *discordgo.Session) string {
 	rand.Seed(time.Now().UnixNano()) //init random
 	if t == "" {
 		return "error - blank search query"
@@ -57,6 +58,9 @@ func processText(t string) string {
 		sf := getSurflineForecast()
 		r := parseForecast(sf)
 		return r
+    }
+    if t == "roulette" {
+        return roulette(m,session)
 	}
 	return jb(t)
 	//return "error - no responses found for query: " + t
