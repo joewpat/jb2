@@ -1,19 +1,19 @@
-	.gcloudignore
-	Dockerfile
-	app.yaml
-	bible.key
-	deepthoughts
-	deploy.sh
-	discord.channelID
-	discord.test.token
-	discord.token
-	giphy.key
-	jb2
-	joebot.yaml
-	keys
-	noaa.key
-	scratch.txt
-	scratch/
-	tenor.key
-	token
-	youtube.key
+.gcloudignore
+Dockerfile
+app.yaml
+bible.key
+deepthoughts
+deploy.sh
+discord.channelID
+discord.test.token
+discord.token
+giphy.key
+jb2
+joebot.yaml
+keys
+noaa.key
+scratch.txt
+scratch/
+tenor.key
+token
+youtube.key
