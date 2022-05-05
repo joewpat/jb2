@@ -56,13 +56,13 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	if strings.HasPrefix(m.Content, "jb ") {
+	if strings.HasPrefix(strings.ToLower(m.Content), "jb ") {
 		fmt.Println("triggered", m.Content[3:])
 		text := m.Content[3:]
 		go func() {
 			s.ChannelTyping(m.ChannelID)
 		}()
-		resp := processText(text,m.Message,s)
+		resp := processText(text, m.Message, s)
 		fmt.Println("Final Reply: \n", resp+"\n")
 		s.ChannelMessageSend(m.ChannelID, resp)
 	} else if strings.Contains(strings.ToLower(m.Content), "another one") {
@@ -90,9 +90,17 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+//sendLog is used to send log messages to discord for easy/fun debugging
+func sendLog(t string) {
+	token := readDiscordKey()
+	dg, _ := discordgo.New("Bot " + token)
+	_ = dg.Open()
+	logChannel := readLogChannelID()
+	dg.ChannelMessageSend(logChannel, t)
+}
+
 func onReady(s *discordgo.Session, r *discordgo.Ready) {
-	logChannel := "932392855471788112"
-	s.ChannelMessageSend(logChannel, "I have been redeployed.")
+	sendLog("I have been redeployed.")
 }
 
 //runs daily for the motivational message
@@ -118,6 +126,14 @@ func readDiscordKey() string {
 
 func readChannelID() string {
 	key, err := ioutil.ReadFile("discord.channelID")
+	if err != nil {
+		panic(err)
+	}
+	return string(key)
+}
+
+func readLogChannelID() string {
+	key, err := ioutil.ReadFile("discord.logChannelID")
 	if err != nil {
 		panic(err)
 	}

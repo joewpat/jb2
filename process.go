@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -30,21 +31,7 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 		text := t[4:]
 		fmt.Println("searching for gifs, query: ", text)
 		t = strings.Replace(text, " ", "+", -1)
-		tenor := searchTenor(t)
-		giphy := searchGiphy(t)
-		var responses []string
-		if strings.HasPrefix(tenor, "http") {
-			responses = append(responses, tenor)
-			fmt.Println("response from tenor: ", tenor)
-		}
-		if strings.HasPrefix(giphy, "http") {
-			responses = append(responses, giphy)
-			fmt.Println("response from giphy: ", giphy)
-		}
-		if len(responses) > 0 {
-			return responses[rand.Intn(len(responses))]
-		}
-		return "error - no gifs found"
+		return searchGifs(t)
 	}
 	if strings.HasPrefix(t, "time") {
 		loc := time.FixedZone("UTC-5", -5*60*60)
@@ -58,9 +45,9 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 		sf := getSurflineForecast()
 		r := parseForecast(sf)
 		return r
-    }
-    if t == "roulette" {
-        return roulette(m,session)
+	}
+	if t == "roulette" {
+		return roulette(m, session)
 	}
 	return jb(t)
 	//return "error - no responses found for query: " + t

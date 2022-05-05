@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -118,4 +119,22 @@ func searchTenor(query string) string {
 		fmt.Println("error searching Tenor")
 		return "error searching Tenor"
 	}
+}
+
+func searchGifs(t string) string {
+	tenor := searchTenor(t)
+	giphy := searchGiphy(t)
+	var responses []string
+	if strings.HasPrefix(tenor, "http") {
+		responses = append(responses, tenor)
+		fmt.Println("response from tenor: ", tenor)
+	}
+	if strings.HasPrefix(giphy, "http") {
+		responses = append(responses, giphy)
+		fmt.Println("response from giphy: ", giphy)
+	}
+	if len(responses) > 0 {
+		return responses[rand.Intn(len(responses))]
+	}
+	return "error - no gifs found"
 }
