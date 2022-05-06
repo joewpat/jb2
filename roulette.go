@@ -10,7 +10,7 @@ import (
 )
 
 //taunt the user before deciding their fate
-func taunt(a string) string {
+func taunt() string {
 	tauntmsg := "Let's decide your fate"
 	//let's decide your fate
 	return tauntmsg
@@ -18,6 +18,7 @@ func taunt(a string) string {
 
 //either kick or save the user
 func roulette(m *discordgo.Message, session *discordgo.Session) string {
+	taunt()
 	rand.Seed(time.Now().UnixNano()) //init random
 	safemsg := "Looks like you live... this time"
 	killmsg := "nothing personnel, kid"
@@ -35,10 +36,30 @@ func roulette(m *discordgo.Message, session *discordgo.Session) string {
 		fmt.Println(session.GuildMemberDeleteWithReason(guild, m.Author.ID, killmsg))
 		fmt.Println("Kicking user with ID", m.Author.ID)
 		sendLog(fmt.Sprintln("Kicking user with ID", m.Author.ID))
+		//add functionality to PM the user to bring them back to life
+		go revive(m, session)
 		return killmsg
 	} else {
 		//tell the user they're safe
 		session.ChannelMessageSend(m.ChannelID, safegif)
 		return safemsg
 	}
+}
+
+func revive(m *discordgo.Message, session *discordgo.Session) {
+	author := m.Author.ID
+	reviveSeconds := 5
+	reviveMessage := "Stay away from the light. We still need you!"
+	userChannel, err := session.UserChannelCreate(author)
+	var invite discordgo.Invite
+	invite.MaxAge = 20
+	invite.MaxUses = 1
+	invite.Temporary = true
+	userInvite, err := session.ChannelInviteCreate(m.ChannelID, invite)
+	fmt.Println(err)
+	time.Sleep(time.Duration(reviveSeconds) * time.Second)
+	userInviteLink := "https://discord.gg/" + userInvite.Code
+	session.ChannelMessageSend(userChannel.ID, reviveMessage)
+	time.Sleep(time.Duration(reviveSeconds/2) * time.Second)
+	session.ChannelMessageSend(userChannel.ID, userInviteLink)
 }
