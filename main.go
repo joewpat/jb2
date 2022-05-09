@@ -70,22 +70,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		go func() {
 			s.ChannelTyping(m.ChannelID)
 		}()
-		tenor := searchTenor("dj+khaled")
-		giphy := searchGiphy("dj+khaled")
-		var responses []string
-		if strings.HasPrefix(tenor, "http") {
-			responses = append(responses, tenor)
-			fmt.Println("response from tenor: ", tenor)
-		}
-		if strings.HasPrefix(giphy, "http") {
-			responses = append(responses, giphy)
-			fmt.Println("response from giphy: ", giphy)
-		}
-		if len(responses) > 0 {
-			resp := responses[rand.Intn(len(responses))]
-			s.ChannelMessageSend(m.ChannelID, resp)
-		}
-		fmt.Println("no gifs found for dj khaled")
+		resp := djKhaledGif()
+		s.ChannelMessageSend(m.ChannelID, resp)
 		return
 	}
 }

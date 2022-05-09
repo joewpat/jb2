@@ -138,3 +138,22 @@ func searchGifs(t string) string {
 	}
 	return "error - no gifs found"
 }
+
+func djKhaledGif() string {
+	tenor := searchTenor("dj+khaled")
+	giphy := searchGiphy("dj+khaled")
+	var responses []string
+	if strings.HasPrefix(tenor, "http") {
+		responses = append(responses, tenor)
+		fmt.Println("response from tenor: ", tenor)
+	}
+	if strings.HasPrefix(giphy, "http") {
+		responses = append(responses, giphy)
+		sendLog(fmt.Sprintln("response from giphy: ", giphy))
+	}
+	if len(responses) > 0 {
+		return responses[rand.Intn(len(responses))]
+	}
+	sendLog("no gifs found for dj khaled")
+	return "..."
+}

@@ -15,7 +15,7 @@ import (
 
 const regex = `<.*?>`
 
-// This method uses a regular expresion to remove HTML tags.
+// stripHtmlRegex uses regular expresion to remove HTML tags.
 func stripHtmlRegex(s string) string {
 	r := regexp.MustCompile(regex)
 	return r.ReplaceAllString(s, "")
@@ -50,5 +50,4 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 		return roulette(m, session)
 	}
 	return jb(t)
-	//return "error - no responses found for query: " + t
 }
