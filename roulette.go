@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -22,19 +23,22 @@ func roulette(m *discordgo.Message, session *discordgo.Session) string {
 	rand.Seed(time.Now().UnixNano()) //init random
 	safemsg := "Looks like you live... this time"
 	killmsg := "nothing personnel, kid"
-	safegif := searchGifs("relieved")
-	killgif := searchGifs("gunshot")
-	fmt.Println("Russian roulette triggered for user", m.Author)
+	safegif := "relieved"
+	killgif := "gunshot"
+	//safegif := searchGifs("relieved")
+	//killgif := searchGifs("gunshot")
 	sendLog(fmt.Sprintln("Russian roulette triggered for user", m.Author))
 	bullet := rand.Intn(5)
 	guild := m.GuildID
-	fmt.Println("revolver landed on chamber: ", bullet)
-	sendLog(fmt.Sprintln("revolver landed on chamber: ", bullet))
+	sendLog(fmt.Sprintln("suicide mode triggered"))
+	if strings.Contains(m.Content[3:], "suicide") {
+		sendLog(fmt.Sprintln("revolver landed on chamber: ", bullet))
+		bullet = 0
+	}
 	if bullet == 0 {
 		//kick the user - Will only work if the bot has higher permissions than the user
 		session.ChannelMessageSend(m.ChannelID, killgif)
 		fmt.Println(session.GuildMemberDeleteWithReason(guild, m.Author.ID, killmsg))
-		fmt.Println("Kicking user with ID", m.Author.ID)
 		sendLog(fmt.Sprintln("Kicking user with ID", m.Author.ID))
 		//add functionality to PM the user to bring them back to life
 		go revive(m, session)
@@ -47,19 +51,29 @@ func roulette(m *discordgo.Message, session *discordgo.Session) string {
 }
 
 func revive(m *discordgo.Message, session *discordgo.Session) {
+	reviveSeconds := 5                                              //Time between killing the user and reviving them
+	reviveMessage := "Stay away from the light. We still need you!" //Message to send to user before sending them the invite link
+
 	author := m.Author.ID
-	reviveSeconds := 5
-	reviveMessage := "Stay away from the light. We still need you!"
 	userChannel, err := session.UserChannelCreate(author)
+	if err != nil {
+		fmt.Println("error DMing user,", err)
+		return
+	}
 	var invite discordgo.Invite
 	invite.MaxAge = 20
 	invite.MaxUses = 1
 	invite.Temporary = true
 	userInvite, err := session.ChannelInviteCreate(m.ChannelID, invite)
-	fmt.Println(err)
+	if err != nil {
+		fmt.Println("error creating channel invite,", err)
+		return
+	}
 	time.Sleep(time.Duration(reviveSeconds) * time.Second)
+	sendLog("Revive timer up, sending revive message")
 	userInviteLink := "https://discord.gg/" + userInvite.Code
 	session.ChannelMessageSend(userChannel.ID, reviveMessage)
 	time.Sleep(time.Duration(reviveSeconds/2) * time.Second)
 	session.ChannelMessageSend(userChannel.ID, userInviteLink)
+	sendLog("Sent invite message with link: " + userInviteLink)
 }

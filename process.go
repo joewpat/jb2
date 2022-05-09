@@ -46,7 +46,7 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 		r := parseForecast(sf)
 		return r
 	}
-	if t == "roulette" {
+	if strings.HasPrefix(t, "roulette") {
 		return roulette(m, session)
 	}
 	return jb(t)

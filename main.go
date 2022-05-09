@@ -97,6 +97,7 @@ func sendLog(t string) {
 	_ = dg.Open()
 	logChannel := readLogChannelID()
 	dg.ChannelMessageSend(logChannel, t)
+	fmt.Println(t)
 }
 
 func onReady(s *discordgo.Session, r *discordgo.Ready) {
