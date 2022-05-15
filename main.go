@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -93,9 +94,15 @@ func onReady(s *discordgo.Session, r *discordgo.Ready) {
 //runs daily for the motivational message
 func dailyMessage(token string, channelID string) {
 	var quotes []string
-	dg, _ := discordgo.New("Bot " + token)
-	_ = dg.Open()
-	fmt.Println("Daily message triggered.")
+	dg, err := discordgo.New("Bot " + token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = dg.Open()
+	if err != nil {
+		log.Fatal(err)
+	}
+	sendLog("Daily message triggered.")
 	bquote := getBibleVerse()
 	deepthought := getDeepThought()
 	quotes = append(quotes, bquote, deepthought)

@@ -23,10 +23,8 @@ func roulette(m *discordgo.Message, session *discordgo.Session) string {
 	rand.Seed(time.Now().UnixNano()) //init random
 	safemsg := "Looks like you live... this time"
 	killmsg := "nothing personnel, kid"
-	safegif := "relieved"
-	killgif := "gunshot"
-	//safegif := searchGifs("relieved")
-	//killgif := searchGifs("gunshot")
+	safegif := searchGifs("relieved")
+	killgif := searchGifs("gunshot")
 	sendLog(fmt.Sprintln("Russian roulette triggered for user", m.Author))
 	bullet := rand.Intn(5)
 	guild := m.GuildID

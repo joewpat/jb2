@@ -22,10 +22,10 @@ func getDeepThought() string {
 
 	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(err)
+		sendLog(fmt.Sprintln(err))
 	}
 
-	fmt.Println("Request--joe.surf/deepthoughts status: ", resp.StatusCode)
+	sendLog(fmt.Sprintln("Request--joe.surf/deepthoughts status: ", resp.StatusCode))
 	responseBody := fmt.Sprintf("%s", responseData)
 
 	//strip out HTML
@@ -39,7 +39,7 @@ func getDeepThought() string {
 	space := regexp.MustCompile(`\s+`)
 	deepThought = space.ReplaceAllString(deepThought, " ")
 
-	fmt.Println(deepThought)
+	sendLog(deepThought)
 
 	return deepThought
 }

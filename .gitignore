@@ -6,6 +6,7 @@ deepthoughts
 deploy.sh
 discord.channelID
 discord.test.token
+discord.logChannelID
 discord.token
 giphy.key
 jb2
@@ -17,3 +18,4 @@ scratch/
 tenor.key
 token
 youtube.key
+bin
