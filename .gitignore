@@ -1,4 +1,5 @@
 .gcloudignore
+.gitignore
 Dockerfile
 app.yaml
 bible.key
@@ -19,3 +20,6 @@ tenor.key
 token
 youtube.key
 bin
+infra/
+reddit.ua.string
+discord.tokenold
