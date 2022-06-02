@@ -41,7 +41,7 @@ func main() {
 
 	//go-cron scheduler for daily messasge
 	s := gocron.NewScheduler(time.UTC)
-	s.Every(1).Day().At("12:00").Do(dailyMessage, token, channelID)
+	s.Every(1).Day().At("11:00").Do(dailyMessage, token, channelID)
 	s.StartAsync()
 
 	// ctrl+c to quit
