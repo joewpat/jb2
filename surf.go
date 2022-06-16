@@ -110,7 +110,7 @@ func getBuoyData() BuoyData {
 	data := strings.Split(latestReading, " ")
 
 	wh := data[15]
-	whint, err := strconv.ParseFloat(wh, 64)
+	whint, _ := strconv.ParseFloat(wh, 64)
 	ft := whint * 3.28084
 	whft := math.Round(ft*100) / 100
 	report := BuoyData{
