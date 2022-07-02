@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
-	"math/rand"
 	"os"
 	"os/signal"
 	"strings"
@@ -89,25 +87,6 @@ func sendLog(t string) {
 
 func onReady(s *discordgo.Session, r *discordgo.Ready) {
 	sendLog("I have been redeployed.")
-}
-
-//runs daily for the motivational message
-func dailyMessage(token string, channelID string) {
-	var quotes []string
-	dg, err := discordgo.New("Bot " + token)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = dg.Open()
-	if err != nil {
-		log.Fatal(err)
-	}
-	sendLog("Daily message triggered.")
-	bquote := getBibleVerse()
-	deepthought := getDeepThought()
-	quotes = append(quotes, bquote, deepthought)
-	message := "Good morning friends! The theme of today is:\n" + quotes[rand.Intn(len(quotes))]
-	dg.ChannelMessageSend(channelID, message)
 }
 
 func readDiscordKey() string {
