@@ -29,3 +29,16 @@ func dailyMessage(token string, channelID string) {
 	message := "Good morning friends! The theme of today is:\n" + choice
 	dg.ChannelMessageSend(channelID, message)
 }
+
+func dailySurfMessage(token string, surfChannelID string) {
+	dg, err := discordgo.New("Bot " + token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = dg.Open()
+	if err != nil {
+		log.Fatal(err)
+	}
+	message := "sup bras, here's this morning's surf report and forecast :call_me:\n"+getSurflineForecast()
+	dg.ChannelMessageSend(surfChannelID, message)
+}

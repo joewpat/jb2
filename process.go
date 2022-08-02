@@ -42,9 +42,7 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 		return getBibleVerse()
 	}
 	if t == "surf" {
-		sf := getSurflineForecast()
-		r := parseForecast(sf)
-		return r
+		return getSurflineForecast()
 	}
 	if strings.HasPrefix(t, "roulette") {
 		return roulette(m, session)
@@ -53,6 +51,9 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 		text := t[4:]
 		fmt.Println("openAI search for ", text)
 		return openAiSearch(text)
+	}
+	if t == "baro status" {
+		return serverStatusMessage(getBtServerInfo())
 	}
 	return jb(t)
 }

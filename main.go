@@ -16,6 +16,7 @@ import (
 func main() {
 	var token = readDiscordKey()
 	var channelID = readChannelID()
+	var surfChannelID = readSurfChannelID()
 	//removing newline character if added from env variables
 	token = strings.TrimSuffix(token, "\n")
 	// Create a new Discord session using the provided bot token.
@@ -39,7 +40,9 @@ func main() {
 
 	//go-cron scheduler for daily messasge
 	s := gocron.NewScheduler(time.UTC)
-	s.Every(1).Day().At("11:00").Do(dailyMessage, token, channelID)
+	s.Every(1).Day().At("11:30").Do(dailyMessage, token, channelID)
+	s.Every(1).Day().At("11:30").Do(dailySurfMessage, token, surfChannelID)
+	//893136225152692284
 	s.StartAsync()
 
 	// ctrl+c to quit
@@ -86,7 +89,7 @@ func sendLog(t string) {
 }
 
 func onReady(s *discordgo.Session, r *discordgo.Ready) {
-	sendLog("I have been redeployed.")
+	sendLog("jb status: ready")
 }
 
 func readDiscordKey() string {
@@ -107,6 +110,14 @@ func readChannelID() string {
 
 func readLogChannelID() string {
 	key, err := ioutil.ReadFile("discord.logChannelID")
+	if err != nil {
+		panic(err)
+	}
+	return string(key)
+}
+
+func readSurfChannelID() string {
+	key, err := ioutil.ReadFile("discord.surfChannelID")
 	if err != nil {
 		panic(err)
 	}
