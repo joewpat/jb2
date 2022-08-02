@@ -6,6 +6,7 @@ bible.key
 deepthoughts
 deploy.sh
 discord.channelID
+discord.surfChannelID
 discord.test.token
 discord.logChannelID
 discord.token
@@ -23,3 +24,4 @@ bin
 infra/
 reddit.ua.string
 discord.tokenold
+openAi.key

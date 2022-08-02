@@ -26,7 +26,7 @@ func getDeepThought() string {
 	}
 
 	sendLog(fmt.Sprintln("Request--joe.surf/deepthoughts status: ", resp.StatusCode))
-	responseBody := fmt.Sprintf("%s", responseData)
+	responseBody := string(responseData)
 
 	//strip out HTML
 	dt := strings.Split(responseBody, "p>")

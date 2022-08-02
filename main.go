@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
-	"math/rand"
 	"os"
 	"os/signal"
 	"strings"
@@ -18,6 +16,7 @@ import (
 func main() {
 	var token = readDiscordKey()
 	var channelID = readChannelID()
+	var surfChannelID = readSurfChannelID()
 	//removing newline character if added from env variables
 	token = strings.TrimSuffix(token, "\n")
 	// Create a new Discord session using the provided bot token.
@@ -41,13 +40,15 @@ func main() {
 
 	//go-cron scheduler for daily messasge
 	s := gocron.NewScheduler(time.UTC)
-	s.Every(1).Day().At("12:00").Do(dailyMessage, token, channelID)
+	s.Every(1).Day().At("11:30").Do(dailyMessage, token, channelID)
+	s.Every(1).Day().At("11:30").Do(dailySurfMessage, token, surfChannelID)
+	//893136225152692284
 	s.StartAsync()
 
 	// ctrl+c to quit
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 	dg.Close()
 }
@@ -88,26 +89,7 @@ func sendLog(t string) {
 }
 
 func onReady(s *discordgo.Session, r *discordgo.Ready) {
-	sendLog("I have been redeployed.")
-}
-
-//runs daily for the motivational message
-func dailyMessage(token string, channelID string) {
-	var quotes []string
-	dg, err := discordgo.New("Bot " + token)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = dg.Open()
-	if err != nil {
-		log.Fatal(err)
-	}
-	sendLog("Daily message triggered.")
-	bquote := getBibleVerse()
-	deepthought := getDeepThought()
-	quotes = append(quotes, bquote, deepthought)
-	message := "Good morning friends! The theme of today is:\n" + quotes[rand.Intn(len(quotes))]
-	dg.ChannelMessageSend(channelID, message)
+	sendLog("jb status: ready")
 }
 
 func readDiscordKey() string {
@@ -128,6 +110,14 @@ func readChannelID() string {
 
 func readLogChannelID() string {
 	key, err := ioutil.ReadFile("discord.logChannelID")
+	if err != nil {
+		panic(err)
+	}
+	return string(key)
+}
+
+func readSurfChannelID() string {
+	key, err := ioutil.ReadFile("discord.surfChannelID")
 	if err != nil {
 		panic(err)
 	}

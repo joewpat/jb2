@@ -6,20 +6,20 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
 
+/*
 const regex = `<.*?>`
 
 // stripHtmlRegex uses regular expresion to remove HTML tags.
 func stripHtmlRegex(s string) string {
 	r := regexp.MustCompile(regex)
 	return r.ReplaceAllString(s, "")
-}
+}*/
 
 func processText(t string, m *discordgo.Message, session *discordgo.Session) string {
 	rand.Seed(time.Now().UnixNano()) //init random
@@ -42,12 +42,18 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 		return getBibleVerse()
 	}
 	if t == "surf" {
-		sf := getSurflineForecast()
-		r := parseForecast(sf)
-		return r
+		return getSurflineForecast()
 	}
 	if strings.HasPrefix(t, "roulette") {
 		return roulette(m, session)
+	}
+	if strings.HasPrefix(t, "-ai") {
+		text := t[4:]
+		fmt.Println("openAI search for ", text)
+		return openAiSearch(text)
+	}
+	if t == "baro status" {
+		return serverStatusMessage(getBtServerInfo())
 	}
 	return jb(t)
 }

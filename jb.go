@@ -23,5 +23,5 @@ func jb(query string) string {
 		fmt.Println(err)
 		return ""
 	}
-	return fmt.Sprintf("%s", responseData)
+	return string(responseData)
 }
