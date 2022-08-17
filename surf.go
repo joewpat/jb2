@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
-	"sort"
 )
 
 type SurflineWaveForecast struct {
@@ -86,7 +86,7 @@ func convertDirection(bearing float64) string {
 	b := int(bearing)
 	if b < 24 {
 		return "N"
-		fmt.Println(b)
+		//fmt.Println(b)
 	}
 	if b < 69 {
 		return "NE"
@@ -132,9 +132,9 @@ func parseForecast(wave SurflineWaveForecast, wind SurflineWindForecast, tide Ti
 				//surfline conditions forecast comes in days, wind and tide come in hours
 				x := (i * 24) + 7
 				y := (i * 24) + 14
-			//	z := i*24
-			//	p := (2*i)
-			//	q := (2*i)
+				//	z := i*24
+				//	p := (2*i)
+				//	q := (2*i)
 				amWindLow := math.Round(mphFromKnots(wind.Data.Wind[x].Speed))
 				amWindHigh := math.Round(mphFromKnots(wind.Data.Wind[x].Gust))
 				amWindDir := convertDirection(wind.Data.Wind[x].Direction)
@@ -176,13 +176,13 @@ func parseForecast(wave SurflineWaveForecast, wind SurflineWindForecast, tide Ti
 					"am: " + fmt.Sprint(conditions.Am.MinHeight) +
 					"-" + fmt.Sprint(conditions.Am.MaxHeight) + "ft  " +
 					fmt.Sprint(conditions.Am.HumanRelation) +
-					"\tprimary swell: " + fmt.Sprint(math.Floor(amPrimarySwells[0].Height*10)/10, "ft@",amPrimarySwells[0].Period, "sec") +
+					"\tprimary swell: " + fmt.Sprint(math.Floor(amPrimarySwells[0].Height*10)/10, "ft@", amPrimarySwells[0].Period, "sec") +
 					"\twind: " + amWindReport +
 					"\t\trating: " + conditions.Am.Rating +
 					"\npm: " + fmt.Sprint(conditions.Pm.MinHeight) +
 					"-" + fmt.Sprint(conditions.Pm.MaxHeight) + "ft  " +
 					fmt.Sprint(conditions.Pm.HumanRelation) +
-					"\tprimary swell: " + fmt.Sprint(math.Floor(pmPrimarySwells[0].Height*10)/10, "ft@",pmPrimarySwells[0].Period, "sec") +
+					"\tprimary swell: " + fmt.Sprint(math.Floor(pmPrimarySwells[0].Height*10)/10, "ft@", pmPrimarySwells[0].Period, "sec") +
 					"\twind: " + pmWindReport +
 					"\t\trating: " + conditions.Pm.Rating + "\n" +
 					"--------------------------------------------------------------------------------------------------------------\n"
@@ -235,9 +235,9 @@ func getSurflineWindForecast() SurflineWindForecast {
 	if err != nil {
 		fmt.Println(err)
 		if e, ok := err.(*json.SyntaxError); ok {
-			fmt.Println("syntax error at byte offset %d", e.Offset)
+			fmt.Printf("syntax error at byte offset %d\n", e.Offset)
 		}
-		fmt.Println("sakura response: %q", responseData)
+		fmt.Printf("sakura response: %q\n", responseData)
 		fmt.Println(err)
 	}
 	fmt.Println("wind forecast OK")
@@ -331,7 +331,7 @@ func getBuoyData() BuoyData {
 	data := strings.Split(latestReading, " ")
 
 	wh := data[15]
-	whint, err := strconv.ParseFloat(wh, 64)
+	whint, _ := strconv.ParseFloat(wh, 64)
 	ft := whint * 3.28084
 	whft := math.Round(ft*100) / 100
 	report := BuoyData{

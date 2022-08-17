@@ -55,5 +55,8 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 	if t == "baro status" {
 		return serverStatusMessage(getBtServerInfo())
 	}
+	if strings.HasPrefix(t, "8ball") {
+		return roll8ball()
+	}
 	return jb(t)
 }
