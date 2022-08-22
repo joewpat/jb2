@@ -58,5 +58,21 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 	if strings.HasPrefix(t, "8ball") {
 		return roll8ball()
 	}
+	if t == "whoami" {
+		return fmt.Sprintf(m.Author.ID, " - ", m.Author.Username)
+	}
+	if t == "baro shutdown" {
+		if m.Author.ID == "325336510578819074" {
+			session.ChannelMessageSend(m.ChannelID, "initiating baro shutdown")
+			btShutdown()
+			return "bt server shutdown complete"
+		} else {
+			return "YOU ARE UNAUTHORIZED TO PERFORM THIS COMMAND. THIS INCIDENT HAS BEEN LOGGED"
+		}
+	}
+	if t == "baro start" {
+		btServerStart()
+		return "starting BT server..."
+	}
 	return jb(t)
 }
