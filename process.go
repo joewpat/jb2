@@ -74,5 +74,10 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 		btServerStart()
 		return "starting BT server..."
 	}
+	if strings.HasPrefix(t, "draw") {
+		text := t[5:]
+		fmt.Println("dall-e search for: ", text)
+		return dallEText(text)
+	}
 	return jb(t)
 }

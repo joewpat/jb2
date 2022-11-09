@@ -84,6 +84,7 @@ func btStop() {
 	}
 }
 
+/*
 func btBackup() {
 	vs := vssh.New().Start()
 	config, _ := vssh.GetConfigPEM("azureuser", "btServer_key.pem")
@@ -109,7 +110,7 @@ func btBackup() {
 		txt := stream.TextStdout()
 		fmt.Println(txt)
 	}
-}
+}*/
 
 func btServerShutdown() {
 	vs := vssh.New().Start()
@@ -148,7 +149,8 @@ func btShutdown() {
 func btServerStart() {
 	apiKey := readBtServerApiKey()
 	url := "https://fapp-joebot.azurewebsites.net/start/" + apiKey
-	client := &http.Client{Timeout: 15 * time.Second}
+	fmt.Println("url: ", url)
+	client := &http.Client{Timeout: 45 * time.Second}
 	req, _ := http.NewRequest("GET", url, nil)
 	resp, err := client.Do(req)
 	if err != nil {
