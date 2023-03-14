@@ -5,9 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/PullRequestInc/go-gpt3"
@@ -15,8 +15,8 @@ import (
 
 var openAiKey = readOpenAiKey()
 
-//openAiSearch uses a supplied API key to query openAi with supplied string.
-//currently utilizes the davinci model completionrequest function.
+// openAiSearch uses a supplied API key to query openAi with supplied string.
+// currently utilizes the davinci model completionrequest function.
 func openAiSearch(query string) string {
 	apiKey := openAiKey
 	if apiKey == "" {
@@ -24,7 +24,7 @@ func openAiSearch(query string) string {
 	}
 
 	ctx := context.Background()
-	client := gpt3.NewClient(apiKey, gpt3.WithDefaultEngine("text-davinci-002"))
+	client := gpt3.NewClient(apiKey, gpt3.WithDefaultEngine("text-davinci-003"))
 
 	resp, err := client.Completion(ctx, gpt3.CompletionRequest{
 		Prompt:    []string{query},
@@ -40,7 +40,7 @@ func openAiSearch(query string) string {
 
 }
 
-//Dall-E image generation based on text query
+// Dall-E image generation based on text query
 func dallEText(query string) string {
 	type Dalle struct {
 		Created int `json:"created"`
@@ -54,12 +54,11 @@ func dallEText(query string) string {
 	requestBody := fmt.Sprintf(`{
 	"prompt": "%s",
 	"n": 1,
-	"size": "256x256"
+	"size": "1024x1024"
 	}`, query)
 
-	fmt.Println(requestBody)
+	sendLog(requestBody)
 
-	//resp, _ := client.Get("https://api.openai.com/v1/images/generations")
 	req, _ := http.NewRequest("POST", "https://api.openai.com/v1/images/generations", bytes.NewBuffer([]byte(requestBody)))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+openAiKey)
@@ -77,16 +76,6 @@ func dallEText(query string) string {
 		fmt.Println(derr)
 	}
 
-	/*
-		responseData, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println(err)
-			return ""
-		}
-
-		fmt.Println(responseData)
-	*/
-
 	if post.Data[0].URL != "" {
 		return post.Data[0].URL
 	}
@@ -94,10 +83,10 @@ func dallEText(query string) string {
 	return "I cannot"
 }
 
-//reads openai key from app directory.
-//TODO: move to env variables
+// reads openai key from app directory.
+// TODO: move to env variables/kv
 func readOpenAiKey() string {
-	key, err := ioutil.ReadFile("openAi.key")
+	key, err := os.ReadFile("openAi.key")
 	if err != nil {
 		panic(err)
 	}
