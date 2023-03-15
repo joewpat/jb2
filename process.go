@@ -12,19 +12,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-/*
-const regex = `<.*?>`
-
-// stripHtmlRegex uses regular expresion to remove HTML tags.
-func stripHtmlRegex(s string) string {
-	r := regexp.MustCompile(regex)
-	return r.ReplaceAllString(s, "")
-}*/
-
 func processText(t string, m *discordgo.Message, session *discordgo.Session) string {
 	rand.Seed(time.Now().UnixNano()) //init random
 	if t == "" {
-		return "error - blank search query"
+		return "what?"
 	}
 	fmt.Println("query: ", t)
 	if strings.HasPrefix(t, "gif ") {
