@@ -40,8 +40,8 @@ func main() {
 
 	//go-cron scheduler for daily messasge
 	s := gocron.NewScheduler(time.UTC)
-	s.Every(1).Day().At("12:30").Do(dailyMessage, token, channelID)
-	s.Every(1).Day().At("12:30").Do(dailySurfMessage, token, surfChannelID)
+	s.Every(1).Day().At("11:30").Do(dailyMessage, token, channelID)
+	s.Every(1).Day().At("11:40").Do(dailySurfMessage, token, surfChannelID)
 	//893136225152692284
 	s.StartAsync()
 
