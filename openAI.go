@@ -2,29 +2,83 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
-
-	"github.com/PullRequestInc/go-gpt3"
 )
 
 var openAiKey = readOpenAiKey()
 
-//openAiSearch uses a supplied API key to query openAi with supplied string.
-//currently utilizes the davinci model completionrequest function.
+/*
+curl https://api.openai.com/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -d '{
+  "model": "gpt-3.5-turbo",
+  "messages": [{"role": "user", "content": "Hello!"}]
+}'
+*/
+
+// openAiSearch uses a supplied API key to query openAi with supplied string.
+// currently utilizes the davinci model completionrequest function.
 func openAiSearch(query string) string {
+	type OpenAI struct {
+		Choices []struct {
+			Message struct {
+				Role    string `json:"role"`
+				Content string `json:"content"`
+			} `json:"message"`
+			FinishReason string `json:"finish_reason"`
+			Index        int    `json:"index"`
+		} `json:"choices"`
+	}
 	apiKey := openAiKey
 	if apiKey == "" {
 		log.Fatalln("Missing API KEY")
 	}
 
+	client := &http.Client{Timeout: 30 * time.Second}
+
+	requestBody := fmt.Sprintf(`{
+	"model": "gpt-3.5-turbo",
+	"messages": [{"role": "user", "content": "%s"}]
+	}`, query)
+
+	sendLog(requestBody)
+
+	req, _ := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer([]byte(requestBody)))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+openAiKey)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	post := &OpenAI{}
+	openaiErr := json.NewDecoder(resp.Body).Decode(post)
+	if openaiErr != nil {
+		fmt.Println(openaiErr)
+	}
+
+	sendLog(fmt.Sprintln(post))
+
+	if post.Choices[0].Message.Content != "" {
+		return post.Choices[0].Message.Content
+	}
+
+	return "I cannot"
+}
+
+/*
+
 	ctx := context.Background()
-	client := gpt3.NewClient(apiKey, gpt3.WithDefaultEngine("text-davinci-002"))
+	client := gpt3.NewClient(apiKey, gpt3.WithDefaultEngine("text-davinci-003"))
 
 	resp, err := client.Completion(ctx, gpt3.CompletionRequest{
 		Prompt:    []string{query},
@@ -37,10 +91,9 @@ func openAiSearch(query string) string {
 	fmt.Println(ans)
 	responseText := "```" + ans + "```"
 	return responseText
+*/
 
-}
-
-//Dall-E image generation based on text query
+// Dall-E image generation based on text query
 func dallEText(query string) string {
 	type Dalle struct {
 		Created int `json:"created"`
@@ -54,12 +107,11 @@ func dallEText(query string) string {
 	requestBody := fmt.Sprintf(`{
 	"prompt": "%s",
 	"n": 1,
-	"size": "256x256"
+	"size": "1024x1024"
 	}`, query)
 
-	fmt.Println(requestBody)
+	sendLog(requestBody)
 
-	//resp, _ := client.Get("https://api.openai.com/v1/images/generations")
 	req, _ := http.NewRequest("POST", "https://api.openai.com/v1/images/generations", bytes.NewBuffer([]byte(requestBody)))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+openAiKey)
@@ -77,16 +129,6 @@ func dallEText(query string) string {
 		fmt.Println(derr)
 	}
 
-	/*
-		responseData, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println(err)
-			return ""
-		}
-
-		fmt.Println(responseData)
-	*/
-
 	if post.Data[0].URL != "" {
 		return post.Data[0].URL
 	}
@@ -94,10 +136,10 @@ func dallEText(query string) string {
 	return "I cannot"
 }
 
-//reads openai key from app directory.
-//TODO: move to env variables
+// reads openai key from app directory.
+// TODO: move to env variables/kv
 func readOpenAiKey() string {
-	key, err := ioutil.ReadFile("openAi.key")
+	key, err := os.ReadFile("openAi.key")
 	if err != nil {
 		panic(err)
 	}

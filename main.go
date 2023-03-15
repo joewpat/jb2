@@ -41,7 +41,7 @@ func main() {
 	//go-cron scheduler for daily messasge
 	s := gocron.NewScheduler(time.UTC)
 	s.Every(1).Day().At("11:30").Do(dailyMessage, token, channelID)
-	s.Every(1).Day().At("11:30").Do(dailySurfMessage, token, surfChannelID)
+	s.Every(1).Day().At("11:40").Do(dailySurfMessage, token, surfChannelID)
 	//893136225152692284
 	s.StartAsync()
 
@@ -58,6 +58,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
+
+	//log chats
+
 	if strings.HasPrefix(strings.ToLower(m.Content), "jb ") {
 		fmt.Println("triggered", m.Content[3:])
 		text := m.Content[3:]
@@ -78,7 +81,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-//sendLog is used to send log messages to discord for easy/fun debugging
+// sendLog is used to send log messages to discord for easy/fun debugging
 func sendLog(t string) {
 	token := readDiscordKey()
 	dg, _ := discordgo.New("Bot " + token)
