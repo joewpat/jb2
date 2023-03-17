@@ -40,10 +40,10 @@ func openAiSearch(query string) string {
 		log.Fatalln("Missing API KEY")
 	}
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 60 * time.Second}
 
 	requestBody := fmt.Sprintf(`{
-	"model": "gpt-3.5-turbo",
+	"model": "gpt-4",
 	"messages": [{"role": "user", "content": "%s"}]
 	}`, query)
 
@@ -69,7 +69,8 @@ func openAiSearch(query string) string {
 	sendLog(fmt.Sprintln(post))
 
 	if post.Choices[0].Message.Content != "" {
-		return post.Choices[0].Message.Content
+		responseText := "```" + post.Choices[0].Message.Content + "```"
+		return responseText
 	}
 
 	return "I cannot"
