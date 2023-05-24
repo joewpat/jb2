@@ -53,7 +53,7 @@ func gpt3(query string) string {
 	requestBody := fmt.Sprintf(`{
 	"model": "text-davinci-003",
 	"prompt": "%s",
-	"max_tokens": 4096
+	"max_tokens": 4000
 	}`, query)
 
 	/*requestBody := fmt.Sprintf(`{
@@ -88,7 +88,7 @@ func gpt3(query string) string {
 		return responseText
 	}
 
-	return "I cannot"
+	return "Error retreiving OpenAI response"
 }
 
 // GPT 4:
@@ -135,12 +135,12 @@ func gpt4(query string) string {
 
 	sendLog(fmt.Sprintln(post))
 
-	if post.Choices[0].Message.Content != "" {
+	if post.Choices != nil {
 		responseText := "```" + post.Choices[0].Message.Content + "```"
 		return responseText
 	}
 
-	return "I cannot"
+	return "Error retreiving OpenAI response"
 }
 
 // Dall-E image generation based on text query
