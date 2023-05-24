@@ -12,20 +12,88 @@ import (
 
 var openAiKey = readOpenAiKey()
 
-/*
-curl https://api.openai.com/v1/chat/completions \
-  -H 'Content-Type: application/json' \
-  -H 'Authorization: Bearer YOUR_API_KEY' \
-  -d '{
-  "model": "gpt-3.5-turbo",
-  "messages": [{"role": "user", "content": "Hello!"}]
-}'
-*/
+// reads openai key from app directory.
+// TODO: move to env variables/kv
+func readOpenAiKey() string {
+	key, err := os.ReadFile("openAi.key")
+	if err != nil {
+		panic(err)
+	}
+	return string(key)
+}
 
 // openAiSearch uses a supplied API key to query openAi with supplied string.
 // currently utilizes the davinci model completionrequest function.
-func openAiSearch(query string) string {
-	type OpenAI struct {
+func gpt3(query string) string {
+	type OpenAIGPT3Response struct {
+		ID      string `json:"id"`
+		Object  string `json:"object"`
+		Created int    `json:"created"`
+		Model   string `json:"model"`
+		Choices []struct {
+			Text         string      `json:"text"`
+			Index        int         `json:"index"`
+			Logprobs     interface{} `json:"logprobs"`
+			FinishReason string      `json:"finish_reason"`
+		} `json:"choices"`
+		Usage struct {
+			PromptTokens     int `json:"prompt_tokens"`
+			CompletionTokens int `json:"completion_tokens"`
+			TotalTokens      int `json:"total_tokens"`
+		} `json:"usage"`
+	}
+	apiKey := openAiKey
+	if apiKey == "" {
+		log.Fatalln("Missing API KEY")
+	}
+
+	client := &http.Client{Timeout: 120 * time.Second}
+
+	//GPT3 Text completion:
+	requestBody := fmt.Sprintf(`{
+	"model": "text-davinci-003",
+	"prompt": "%s",
+	"max_tokens": 4000
+	}`, query)
+
+	/*requestBody := fmt.Sprintf(`{
+	"model": "gpt-4",
+	"messages": [{"role": "user", "content": "%s"}]
+	}`, query)*/
+
+	sendLog(requestBody)
+
+	req, _ := http.NewRequest("POST", "https://api.openai.com/v1/completions", bytes.NewBuffer([]byte(requestBody)))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+openAiKey)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	post := &OpenAIGPT3Response{}
+	openaiErr := json.NewDecoder(resp.Body).Decode(post)
+	if openaiErr != nil {
+		fmt.Println(openaiErr)
+	}
+
+	fmt.Println("Response data: ")
+	sendLog(fmt.Sprintln(post))
+
+	if post.Choices != nil {
+		responseText := "```" + post.Choices[0].Text + "```"
+		return responseText
+	}
+
+	return "Error retreiving OpenAI response"
+}
+
+// GPT 4:
+func gpt4(query string) string {
+	type OpenAIGPT4Response struct {
 		Choices []struct {
 			Message struct {
 				Role    string `json:"role"`
@@ -40,7 +108,7 @@ func openAiSearch(query string) string {
 		log.Fatalln("Missing API KEY")
 	}
 
-	client := &http.Client{Timeout: 60 * time.Second}
+	client := &http.Client{Timeout: 120 * time.Second}
 
 	requestBody := fmt.Sprintf(`{
 	"model": "gpt-4",
@@ -48,7 +116,6 @@ func openAiSearch(query string) string {
 	}`, query)
 
 	sendLog(requestBody)
-
 	req, _ := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer([]byte(requestBody)))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+openAiKey)
@@ -60,7 +127,7 @@ func openAiSearch(query string) string {
 	}
 	defer resp.Body.Close()
 
-	post := &OpenAI{}
+	post := &OpenAIGPT4Response{}
 	openaiErr := json.NewDecoder(resp.Body).Decode(post)
 	if openaiErr != nil {
 		fmt.Println(openaiErr)
@@ -68,31 +135,13 @@ func openAiSearch(query string) string {
 
 	sendLog(fmt.Sprintln(post))
 
-	if post.Choices[0].Message.Content != "" {
+	if post.Choices != nil {
 		responseText := "```" + post.Choices[0].Message.Content + "```"
 		return responseText
 	}
 
-	return "I cannot"
+	return "Error retreiving OpenAI response"
 }
-
-/*
-
-	ctx := context.Background()
-	client := gpt3.NewClient(apiKey, gpt3.WithDefaultEngine("text-davinci-003"))
-
-	resp, err := client.Completion(ctx, gpt3.CompletionRequest{
-		Prompt:    []string{query},
-		MaxTokens: gpt3.IntPtr(512),
-	})
-	if err != nil {
-		log.Fatalln(err)
-	}
-	ans := resp.Choices[0].Text
-	fmt.Println(ans)
-	responseText := "```" + ans + "```"
-	return responseText
-*/
 
 // Dall-E image generation based on text query
 func dallEText(query string) string {
@@ -135,14 +184,4 @@ func dallEText(query string) string {
 	}
 
 	return "I cannot"
-}
-
-// reads openai key from app directory.
-// TODO: move to env variables/kv
-func readOpenAiKey() string {
-	key, err := os.ReadFile("openAi.key")
-	if err != nil {
-		panic(err)
-	}
-	return string(key)
 }

@@ -40,8 +40,13 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 	}
 	if strings.HasPrefix(t, "-ai") {
 		text := t[4:]
-		fmt.Println("openAI search for ", text)
-		return openAiSearch(text)
+		fmt.Println("openAI gpt3 search for ", text)
+		return gpt3(text)
+	}
+	if strings.HasPrefix(t, "-gpt4") {
+		text := t[6:]
+		fmt.Println("openAI gpt4 search for ", text)
+		return gpt4(text)
 	}
 	if t == "baro status" {
 		return serverStatusMessage(getBtServerInfo())
@@ -70,5 +75,16 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 		fmt.Println("dall-e search for: ", text)
 		return dallEText(text)
 	}
+	if strings.HasPrefix(t, "locate") {
+		text := t[7:]
+		fmt.Println("google map search for: ", text)
+		return googleMapSearch(text)
+	}
+
+	/*if t == "dmtest" { //daily message manual test
+		dailyMessage()
+		return "starting BT server..."
+	}*/
+
 	return jb(t)
 }
