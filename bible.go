@@ -13,8 +13,6 @@ import (
 	strip "github.com/grokify/html-strip-tags-go"
 )
 
-// play example https://go.dev/play/p/qknP4uBUWFT
-
 type Book struct {
 	Data []struct {
 		Abbr string `json:"abbreviation"`
@@ -169,7 +167,6 @@ func getBibleVerse() string {
 
 	m := f.(map[string]interface{})
 	fmt.Println()
-	//fmt.Println(m["data"])
 	n := m["data"].(map[string]interface{})
 	verse := n["content"]
 	strverse := fmt.Sprintf("%v", verse)

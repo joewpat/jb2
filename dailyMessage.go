@@ -28,14 +28,15 @@ func dailyMessage(token string, channelID string) {
 	month := time.Now().Month()
 
 	greeting := fmt.Sprintf("Good morning! Today is %s, %s %d.\n", dotw, month, day)
+	forecast := weatherForecast()
 	bquote := getBibleVerse()
 	deepthought := getDeepThought()
 
 	var choices []string
 	choices = append(choices, bquote, deepthought)
 	choice := choices[rand.Intn(len(choices))]
-	theme := "\nThe theme of today is:\n " + choice
-	message := greeting + theme
+	theme := "\nThe theme of today is:\n" + choice
+	message := greeting + "\n" + forecast + theme
 	dg.ChannelMessageSend(channelID, message)
 }
 
