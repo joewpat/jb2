@@ -53,7 +53,7 @@ func weatherForecast() string {
 	completeForecast += string(("Forecast for" + forecast.Properties.Periods[0].Name + ":\n"))
 	completeForecast += forecast.Properties.Periods[0].DetailedForecast
 	completeForecast += string(("\nForecast for" + forecast.Properties.Periods[1].Name + ":\n"))
-	completeForecast += forecast.Properties.Periods[1].DetailedForecast
+	completeForecast += forecast.Properties.Periods[1].DetailedForecast + "\n"
 
 	return completeForecast
 }
