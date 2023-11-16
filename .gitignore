@@ -27,3 +27,4 @@ discord.tokenold
 openAi.key
 btServer_key.pem
 btServerAzureFunction.key
+discord.suboptimalchannelID

@@ -17,6 +17,7 @@ func main() {
 	var token = readDiscordKey()
 	var channelID = readChannelID()
 	var surfChannelID = readSurfChannelID()
+	var subOptimalChannelID = readSubOptimalChannelID()
 	//removing newline character if added from env variables
 	token = strings.TrimSuffix(token, "\n")
 	// Create a new Discord session using the provided bot token.
@@ -41,6 +42,7 @@ func main() {
 	//go-cron scheduler for daily messasge
 	s := gocron.NewScheduler(time.UTC)
 	s.Every(1).Day().At("11:30").Do(dailyMessage, token, channelID)
+	s.Every(1).Day().At("11:30").Do(dailyMessage, token, subOptimalChannelID)
 	s.Every(1).Day().At("11:40").Do(dailySurfMessage, token, surfChannelID)
 	//893136225152692284
 	s.StartAsync()
@@ -121,6 +123,14 @@ func readLogChannelID() string {
 
 func readSurfChannelID() string {
 	key, err := ioutil.ReadFile("discord.surfChannelID")
+	if err != nil {
+		panic(err)
+	}
+	return string(key)
+}
+
+func readSubOptimalChannelID() string {
+	key, err := ioutil.ReadFile("discord.suboptimalchannelID")
 	if err != nil {
 		panic(err)
 	}
