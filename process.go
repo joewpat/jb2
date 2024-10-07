@@ -20,7 +20,7 @@ func setSystemMessage(newMessage string) {
 	mood = newMessage
 }
 
-func processText(t string, m *discordgo.Message, session *discordgo.Session) string {
+func processText(t string, m *discordgo.Message) string {
 	rand.Seed(time.Now().UnixNano()) //init random
 	if t == "" {
 		return "what?"
@@ -43,9 +43,10 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 	if t == "surf" {
 		return getSurflineForecast()
 	}
-	if strings.HasPrefix(t, "roulette") {
-		return roulette(m, session)
-	}
+	//removing roulette feature temporarily
+	// if strings.HasPrefix(t, "roulette") {
+	// 	return roulette(m, session)
+	// }
 	if strings.HasPrefix(t, "-ai") {
 		text := t[4:]
 		//fmt.Println("openAI gpt3 search for:", text)
