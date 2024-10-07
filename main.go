@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"strings"
@@ -15,11 +14,10 @@ import (
 
 func main() {
 	var token = readDiscordKey()
-	var channelID = readChannelID()
-	var surfChannelID = readSurfChannelID()
-	var subOptimalChannelID = readSubOptimalChannelID()
+	var channelID = readChannelID() // used for daily message
 	//removing newline character if added from env variables
 	token = strings.TrimSuffix(token, "\n")
+	fmt.Println("Discord Token: ", token)
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
@@ -42,8 +40,8 @@ func main() {
 	//go-cron scheduler for daily messasge
 	s := gocron.NewScheduler(time.UTC)
 	s.Every(1).Day().At("11:30").Do(dailyMessage, token, channelID)
-	s.Every(1).Day().At("11:30").Do(dailyMessage, token, subOptimalChannelID)
-	s.Every(1).Day().At("11:40").Do(dailySurfMessage, token, surfChannelID)
+	//s.Every(1).Day().At("11:30").Do(dailyMessage, token, subOptimalChannelID)
+	//s.Every(1).Day().At("11:40").Do(dailySurfMessage, token, surfChannelID)
 	//893136225152692284
 	s.StartAsync()
 
@@ -85,11 +83,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 // sendLog is used to send log messages to discord for easy/fun debugging
 func sendLog(t string) {
-	token := readDiscordKey()
-	dg, _ := discordgo.New("Bot " + token)
-	_ = dg.Open()
-	logChannel := readLogChannelID()
-	dg.ChannelMessageSend(logChannel, t)
+	// token := readDiscordKey()
+	// dg, _ := discordgo.New("Bot " + token)
+	// _ = dg.Open()
+	// logChannel := readLogChannelID()
+	// dg.ChannelMessageSend(logChannel, t)
 	fmt.Println(t)
 }
 
@@ -98,7 +96,7 @@ func onReady(s *discordgo.Session, r *discordgo.Ready) {
 }
 
 func readDiscordKey() string {
-	key, err := ioutil.ReadFile("discord.token")
+	key, err := os.ReadFile("discord.token")
 	if err != nil {
 		panic(err)
 	}
@@ -106,33 +104,33 @@ func readDiscordKey() string {
 }
 
 func readChannelID() string {
-	key, err := ioutil.ReadFile("discord.channelID")
+	key, err := os.ReadFile("discord.channelID")
 	if err != nil {
 		panic(err)
 	}
 	return string(key)
 }
 
-func readLogChannelID() string {
-	key, err := ioutil.ReadFile("discord.logChannelID")
-	if err != nil {
-		panic(err)
-	}
-	return string(key)
-}
+// func readLogChannelID() string {
+// 	key, err := os.ReadFile("discord.logChannelID")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return string(key)
+// }
 
-func readSurfChannelID() string {
-	key, err := ioutil.ReadFile("discord.surfChannelID")
-	if err != nil {
-		panic(err)
-	}
-	return string(key)
-}
+// func readSurfChannelID() string {
+// 	key, err := os.ReadFile("discord.surfChannelID")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return string(key)
+// }
 
-func readSubOptimalChannelID() string {
-	key, err := ioutil.ReadFile("discord.suboptimalchannelID")
-	if err != nil {
-		panic(err)
-	}
-	return string(key)
-}
+// func readSubOptimalChannelID() string {
+// 	key, err := os.ReadFile("discord.suboptimalchannelID")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return string(key)
+// }

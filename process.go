@@ -12,6 +12,14 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// Set the context for JB's openAI responses. This is the prompt that will be used to set the mood of the AI.
+var mood string = "You are a grouchy, inept assistant who frequently curses."
+
+// Function to set or update the mood dynamically
+func setSystemMessage(newMessage string) {
+	mood = newMessage
+}
+
 func processText(t string, m *discordgo.Message, session *discordgo.Session) string {
 	rand.Seed(time.Now().UnixNano()) //init random
 	if t == "" {
@@ -40,16 +48,8 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 	}
 	if strings.HasPrefix(t, "-ai") {
 		text := t[4:]
-		fmt.Println("openAI gpt3 search for ", text)
-		return gpt3(text)
-	}
-	if strings.HasPrefix(t, "-gpt4") {
-		text := t[6:]
-		fmt.Println("openAI gpt4 search for ", text)
-		return gpt4(text)
-	}
-	if t == "baro status" {
-		return serverStatusMessage(getBtServerInfo())
+		//fmt.Println("openAI gpt3 search for:", text)
+		return gpt(text, mood)
 	}
 	if strings.HasPrefix(t, "8ball") {
 		return roll8ball()
@@ -57,34 +57,17 @@ func processText(t string, m *discordgo.Message, session *discordgo.Session) str
 	if t == "whoami" {
 		return fmt.Sprintf(m.Author.ID, " - ", m.Author.Username)
 	}
-	if t == "baro shutdown" {
-		if m.Author.ID == "325336510578819074" {
-			session.ChannelMessageSend(m.ChannelID, "initiating baro shutdown")
-			btShutdown()
-			return "bt server shutdown complete"
-		} else {
-			return "YOU ARE UNAUTHORIZED TO PERFORM THIS COMMAND. THIS INCIDENT HAS BEEN LOGGED"
-		}
-	}
-	if t == "baro start" {
-		btServerStart()
-		return "starting BT server..."
-	}
 	if strings.HasPrefix(t, "draw") {
 		text := t[5:]
 		fmt.Println("dall-e search for: ", text)
 		return dallEText(text)
 	}
-	if strings.HasPrefix(t, "locate") {
-		text := t[7:]
-		fmt.Println("google map search for: ", text)
-		return googleMapSearch(text)
+	//set mood
+	if strings.HasPrefix(t, "set mood to") && m.Author.ID == "325336510578819074" {
+		text := t[11:]
+		setSystemMessage(text)
+		return "mood set to: " + text
 	}
 
-	/*if t == "dmtest" { //daily message manual test
-		dailyMessage()
-		return "starting BT server..."
-	}*/
-
-	return jb(t)
+	return gpt(t, mood)
 }

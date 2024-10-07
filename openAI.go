@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -20,127 +21,6 @@ func readOpenAiKey() string {
 		panic(err)
 	}
 	return string(key)
-}
-
-// openAiSearch uses a supplied API key to query openAi with supplied string.
-// currently utilizes the davinci model completionrequest function.
-func gpt3(query string) string {
-	type OpenAIGPT3Response struct {
-		ID      string `json:"id"`
-		Object  string `json:"object"`
-		Created int    `json:"created"`
-		Model   string `json:"model"`
-		Choices []struct {
-			Text         string      `json:"text"`
-			Index        int         `json:"index"`
-			Logprobs     interface{} `json:"logprobs"`
-			FinishReason string      `json:"finish_reason"`
-		} `json:"choices"`
-		Usage struct {
-			PromptTokens     int `json:"prompt_tokens"`
-			CompletionTokens int `json:"completion_tokens"`
-			TotalTokens      int `json:"total_tokens"`
-		} `json:"usage"`
-	}
-	apiKey := openAiKey
-	if apiKey == "" {
-		log.Fatalln("Missing API KEY")
-	}
-
-	client := &http.Client{Timeout: 120 * time.Second}
-
-	//GPT3 Text completion:
-	requestBody := fmt.Sprintf(`{
-	"model": "text-davinci-003",
-	"prompt": "%s",
-	"max_tokens": 4000
-	}`, query)
-
-	/*requestBody := fmt.Sprintf(`{
-	"model": "gpt-4",
-	"messages": [{"role": "user", "content": "%s"}]
-	}`, query)*/
-
-	sendLog(requestBody)
-
-	req, _ := http.NewRequest("POST", "https://api.openai.com/v1/completions", bytes.NewBuffer([]byte(requestBody)))
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+openAiKey)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
-	defer resp.Body.Close()
-
-	post := &OpenAIGPT3Response{}
-	openaiErr := json.NewDecoder(resp.Body).Decode(post)
-	if openaiErr != nil {
-		fmt.Println(openaiErr)
-	}
-
-	fmt.Println("Response data: ")
-	sendLog(fmt.Sprintln(post))
-
-	if post.Choices != nil {
-		responseText := "```" + post.Choices[0].Text + "```"
-		return responseText
-	}
-
-	return "Error retreiving OpenAI response"
-}
-
-// GPT 4:
-func gpt4(query string) string {
-	type OpenAIGPT4Response struct {
-		Choices []struct {
-			Message struct {
-				Role    string `json:"role"`
-				Content string `json:"content"`
-			} `json:"message"`
-			FinishReason string `json:"finish_reason"`
-			Index        int    `json:"index"`
-		} `json:"choices"`
-	}
-	apiKey := openAiKey
-	if apiKey == "" {
-		log.Fatalln("Missing API KEY")
-	}
-
-	client := &http.Client{Timeout: 120 * time.Second}
-
-	requestBody := fmt.Sprintf(`{
-	"model": "gpt-4",
-	"messages": [{"role": "user", "content": "%s"}]
-	}`, query)
-
-	sendLog(requestBody)
-	req, _ := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer([]byte(requestBody)))
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+openAiKey)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
-	defer resp.Body.Close()
-
-	post := &OpenAIGPT4Response{}
-	openaiErr := json.NewDecoder(resp.Body).Decode(post)
-	if openaiErr != nil {
-		fmt.Println(openaiErr)
-	}
-
-	sendLog(fmt.Sprintln(post))
-
-	if post.Choices != nil {
-		responseText := "```" + post.Choices[0].Message.Content + "```"
-		return responseText
-	}
-
-	return "Error retreiving OpenAI response"
 }
 
 // Dall-E image generation based on text query
@@ -184,4 +64,106 @@ func dallEText(query string) string {
 	}
 
 	return "I cannot"
+}
+
+//new openAI function - gpt-4o-mini
+
+// OpenAI API endpoint
+const openAIURL = "https://api.openai.com/v1/chat/completions"
+
+// OpenAIRequest struct defines the input to OpenAI API
+type OpenAIChatRequest struct {
+	Model       string    `json:"model"`
+	Messages    []Message `json:"messages"`
+	MaxTokens   int       `json:"max_tokens"`
+	Temperature float64   `json:"temperature"`
+}
+
+// Message struct for chat messages
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+// OpenAIResponse struct defines the structure of the response from OpenAI API
+type OpenAIChatResponse struct {
+	ID      string `json:"id"`
+	Object  string `json:"object"`
+	Created int64  `json:"created"`
+	Model   string `json:"model"`
+	Choices []struct {
+		Message struct {
+			Role    string `json:"role"`
+			Content string `json:"content"`
+		} `json:"message"`
+	} `json:"choices"`
+}
+
+func gpt(query string, context string) string {
+	apiKey := openAiKey
+	fmt.Println("API KEY: ", apiKey)
+	fmt.Println(query)
+
+	// Create the request payload
+	reqBody := OpenAIChatRequest{
+		Model: "gpt-4",
+		Messages: []Message{
+			{
+				Role:    "system",
+				Content: context,
+			},
+			{
+				Role:    "user",
+				Content: query,
+			},
+		},
+		MaxTokens:   1000,
+		Temperature: 0.7,
+	}
+
+	fmt.Println("Using mood: ", context)
+
+	// Convert struct to JSON
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		log.Fatalf("Failed to marshal request: %v", err)
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequest("POST", openAIURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Fatalf("Failed to create request: %v", err)
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiKey))
+
+	// Make the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("Failed to send request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("Failed to read response: %v", err)
+	}
+
+	//fmt.Println("Response body: ", string(body))
+
+	// Unmarshal the response into OpenAIResponse struct
+	var apiResponse OpenAIChatResponse
+	err = json.Unmarshal(body, &apiResponse)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	//fmt.Println("Response: ", apiResponse)
+
+	// Return the result
+	return apiResponse.Choices[0].Message.Content
 }
