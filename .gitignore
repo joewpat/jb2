@@ -28,3 +28,6 @@ openAi.key
 btServer_key.pem
 btServerAzureFunction.key
 discord.suboptimalchannelID
+joe-aws.pem
+*.pem
+*.key
