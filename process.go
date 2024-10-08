@@ -43,15 +43,6 @@ func processText(t string, m *discordgo.Message) string {
 	if t == "surf" {
 		return getSurflineForecast()
 	}
-	//removing roulette feature temporarily
-	// if strings.HasPrefix(t, "roulette") {
-	// 	return roulette(m, session)
-	// }
-	if strings.HasPrefix(t, "-ai") {
-		text := t[4:]
-		//fmt.Println("openAI gpt3 search for:", text)
-		return gpt(text, mood)
-	}
 	if strings.HasPrefix(t, "8ball") {
 		return roll8ball()
 	}
@@ -64,10 +55,14 @@ func processText(t string, m *discordgo.Message) string {
 		return dallEText(text)
 	}
 	//set mood
-	if strings.HasPrefix(t, "set mood to") && m.Author.ID == "325336510578819074" {
+	if strings.HasPrefix(t, "set mood to") && m.Author.ID == "325336510578819074" { //joe's ID only
 		text := t[11:]
 		setSystemMessage(text)
 		return "mood set to: " + text
+	}
+	// manually run daily message
+	if strings.HasPrefix(t, "dailymessagetest") && m.Author.ID == "325336510578819074" { //joe's ID only
+		dailyMessage(readDiscordKey(), readChannelID())
 	}
 
 	return gpt(t, mood)

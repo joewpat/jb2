@@ -115,7 +115,7 @@ func convertDirection(bearing float64) string {
 	return "?"
 }
 
-//takes data from APIs and formats a response
+// takes data from APIs and formats a response
 func parseForecast(wave SurflineWaveForecast, wind SurflineWindForecast, tide TideAndWeatherChart) string {
 	bd := getBuoyData()
 	responseText := "```------------------------------------------------------------------------\n"
