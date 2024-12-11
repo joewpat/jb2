@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"regexp"
 	"time"
 
@@ -45,16 +46,8 @@ type VerseText struct {
 	}
 }
 
-func readBibleAPIKey() string {
-	key, err := ioutil.ReadFile("bible.key")
-	if err != nil {
-		panic(err)
-	}
-	return string(key)
-}
-
 func getBibleVerse() string {
-	key := readBibleAPIKey()
+	key := os.Getenv("BIBLE_API_KEY")
 	kjv := "de4e12af7f28f599-01"
 	url := "https://api.scripture.api.bible/v1/bibles/" + kjv + "/books"
 	client := &http.Client{Timeout: 3 * time.Second}

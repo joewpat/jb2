@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -29,24 +30,8 @@ type Giphy struct {
 	} `json:"data"`
 }
 
-func readTenorKey() string {
-	key, err := ioutil.ReadFile("tenor.key")
-	if err != nil {
-		panic(err)
-	}
-	return string(key)
-}
-
-func readGiphyKey() string {
-	key, err := ioutil.ReadFile("giphy.key")
-	if err != nil {
-		panic(err)
-	}
-	return string(key)
-}
-
 func searchGiphy(query string) string {
-	giphyKey := readGiphyKey()
+	giphyKey := os.Getenv("GIPHY_API_KEY")
 	url := "http://api.giphy.com/v1/gifs/search?q=" + query + "&api_key=" + giphyKey + "&limit=50"
 	fmt.Println("searching giphy: ", url)
 	client := &http.Client{Timeout: 3 * time.Second}
@@ -84,7 +69,7 @@ func searchGiphy(query string) string {
 }
 
 func searchTenor(query string) string {
-	tenorKey := readTenorKey()
+	tenorKey := os.Getenv("TENOR_API_KEY")
 	url := "https://g.tenor.com/v1/search?q=" + query + "&key=" + tenorKey + "&limit=50"
 	fmt.Println("searching tenor: ", url)
 	client := &http.Client{Timeout: 3 * time.Second}

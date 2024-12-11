@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 )
 
 // Set the context for JB's openAI responses. This is the prompt that will be used to set the mood of the AI.
-var mood string = "You are a grouchy, inept assistant who frequently curses."
+var mood string = "A helpful Jewish assistant who is fond of videogames and technology."
 
 // Function to set or update the mood dynamically
 func setSystemMessage(newMessage string) {
@@ -62,7 +63,8 @@ func processText(t string, m *discordgo.Message) string {
 	}
 	// manually run daily message
 	if strings.HasPrefix(t, "dailymessagetest") && m.Author.ID == "325336510578819074" { //joe's ID only
-		dailyMessage(readDiscordKey(), readChannelID())
+		dailyMessage(os.Getenv("DISCORD_TOKEN"), os.Getenv("DISCORD_CHANNEL_ID"))
+		return ""
 	}
 
 	return gpt(t, mood)

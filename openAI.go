@@ -11,17 +11,7 @@ import (
 	"time"
 )
 
-var openAiKey = readOpenAiKey()
-
-// reads openai key from app directory.
-// TODO: move to env variables/kv
-func readOpenAiKey() string {
-	key, err := os.ReadFile("openAi.key")
-	if err != nil {
-		panic(err)
-	}
-	return string(key)
-}
+var openAiKey = os.Getenv("OPEN_AI_KEY")
 
 // Dall-E image generation based on text query
 func dallEText(query string) string {
@@ -32,10 +22,12 @@ func dallEText(query string) string {
 		} `json:"data"`
 	}
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 120 * time.Second}
 
 	requestBody := fmt.Sprintf(`{
 	"prompt": "%s",
+	"model": "dall-e-3",
+	"quality": "hd",
 	"n": 1,
 	"size": "1024x1024"
 	}`, query)
@@ -117,7 +109,7 @@ func gpt(query string, context string) string {
 				Content: query,
 			},
 		},
-		MaxTokens:   1000,
+		MaxTokens:   5000,
 		Temperature: 0.7,
 	}
 
@@ -165,5 +157,9 @@ func gpt(query string, context string) string {
 	//fmt.Println("Response: ", apiResponse)
 
 	// Return the result
-	return apiResponse.Choices[0].Message.Content
+	responseContent := apiResponse.Choices[0].Message.Content
+	if len(responseContent) > 2000 {
+		return responseContent[:2000]
+	}
+	return responseContent
 }
