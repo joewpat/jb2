@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -29,14 +28,16 @@ func dailyMessage(token string, channelID string) {
 
 	greeting := fmt.Sprintf("Good morning! Today is %s, %s %d.\n", dotw, month, day)
 	forecast := weatherForecast()
-	bquote := getBibleVerse()
+	//bquote := getBibleVerse()
+	wotd := GetWordOfTheDay()
+	dayGif := searchGifs(dotw.String() + "blessings")
 	//deepthought := getDeepThought()
 
-	var choices []string
-	choices = append(choices, bquote)
-	choice := choices[rand.Intn(len(choices))]
-	theme := "\nThe theme of today is:\n" + choice
-	message := greeting + "\n" + forecast + theme
+	// var choices []string
+	// choices = append(choices, bquote)
+	// choice := choices[rand.Intn(len(choices))]
+	// theme := "\nToday's bible verse is:\n" + choice
+	message := greeting + "\n" + forecast + "\n" + wotd + "\n" + dayGif
 	dg.ChannelMessageSend(channelID, message)
 }
 

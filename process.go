@@ -66,6 +66,9 @@ func processText(t string, m *discordgo.Message) string {
 		dailyMessage(os.Getenv("DISCORD_TOKEN"), os.Getenv("DISCORD_CHANNEL_ID"))
 		return ""
 	}
-
+	//word of the day
+	if strings.HasPrefix(t, "wordoftheday") {
+		return GetWordOfTheDay()
+	}
 	return gpt(t, mood)
 }

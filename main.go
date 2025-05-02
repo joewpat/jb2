@@ -44,11 +44,6 @@ func main() {
 	//893136225152692284
 	s.StartAsync()
 
-	//send daily message of gif to biz bastion general
-	r := gocron.NewScheduler(time.UTC)
-	r.Every(1).Day().At("12:30").Do(searchGifs("Good morning"), token, 1184213205766131732)
-	r.StartAsync()
-
 	// ctrl+c to quit
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
