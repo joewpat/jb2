@@ -28,28 +28,16 @@ func dailyMessage(token string, channelID string) {
 
 	greeting := fmt.Sprintf("Good morning! Today is %s, %s %d.\n", dotw, month, day)
 	forecast := weatherForecast()
+	genZforecast := gpt("Translate this forecast to Gen Z lingo: "+forecast, "Super hip Gen Z meteorologist.")
 	//bquote := getBibleVerse()
 	wotd := GetWordOfTheDay()
-	dayGif := searchGifs(dotw.String() + "blessings")
+	//dayGif := searchGifs(dotw.String() + "blessings")
 	//deepthought := getDeepThought()
 
 	// var choices []string
 	// choices = append(choices, bquote)
 	// choice := choices[rand.Intn(len(choices))]
 	// theme := "\nToday's bible verse is:\n" + choice
-	message := greeting + "\n" + forecast + "\n" + wotd + "\n" + dayGif
+	message := greeting + "\n" + genZforecast + "\n\n" + wotd + "\n" + getSurfData()
 	dg.ChannelMessageSend(channelID, message)
 }
-
-// func dailySurfMessage(token string, channelID string) {
-// 	dg, err := discordgo.New("Bot " + token)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	err = dg.Open()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	message := "sup bras, here's this morning's surf report and forecast :call_me:\n" + getSurflineForecast()
-// 	dg.ChannelMessageSend(channelID, message)
-// }
