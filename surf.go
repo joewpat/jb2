@@ -6,308 +6,25 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
 
-type SurflineWaveForecast struct {
-	Data struct {
-		Conditions []struct {
-			Timestamp   int    `json:"timestamp"`
-			ForecastDay string `json:"forecastDay"`
-			Forecaster  struct {
-				Name   string `json:"name"`
-				Avatar string `json:"avatar"`
-			} `json:"forecaster"`
-			Human       bool   `json:"human"`
-			Observation string `json:"observation"`
-			Am          struct {
-				MaxHeight        int         `json:"maxHeight"`
-				MinHeight        int         `json:"minHeight"`
-				Plus             bool        `json:"plus"`
-				HumanRelation    string      `json:"humanRelation"`
-				OccasionalHeight interface{} `json:"occasionalHeight"`
-				Rating           string      `json:"rating"`
-			} `json:"am"`
-			Pm struct {
-				MaxHeight        int         `json:"maxHeight"`
-				MinHeight        int         `json:"minHeight"`
-				Plus             bool        `json:"plus"`
-				HumanRelation    string      `json:"humanRelation"`
-				OccasionalHeight interface{} `json:"occasionalHeight"`
-				Rating           string      `json:"rating"`
-			} `json:"pm"`
-		} `json:"conditions"`
-	} `json:"data"`
-}
-
-type SurflineWindForecast struct {
-	Associated struct {
-		Units struct {
-			Temperature string `json:"temperature"`
-			TideHeight  string `json:"tideHeight"`
-			SwellHeight string `json:"swellHeight"`
-			WaveHeight  string `json:"waveHeight"`
-			WindSpeed   string `json:"windSpeed"`
-		} `json:"units"`
-		UtcOffset int `json:"utcOffset"`
-		Location  struct {
-			Lon float64 `json:"lon"`
-			Lat float64 `json:"lat"`
-		} `json:"location"`
-	} `json:"associated"`
-	Data struct {
-		Wind []struct {
-			Timestamp     int     `json:"timestamp"`
-			UtcOffset     int     `json:"utcOffset"`
-			Speed         float64 `json:"speed"`
-			Direction     float64 `json:"direction"`
-			DirectionType string  `json:"directionType"`
-			Gust          float64 `json:"gust"`
-			OptimalScore  int     `json:"optimalScore"`
-		} `json:"wind"`
-	} `json:"data"`
-}
-
 type BuoyData struct {
 	WaveHeight  float64
 	SwellPeriod string
+	WaterTemp   float64
+	WindSpeed   float64
+	WindDir     string
+}
+type TidePrediction struct {
+	Time  string `json:"t"`
+	Level string `json:"type"`
 }
 
-const JaxBeachPierSpotID = "5842041f4e65fad6a7708aa0"
-
-func mphFromKnots(knots float64) float64 {
-	return knots * 1.151
-}
-
-func convertDirection(bearing float64) string {
-	b := int(bearing)
-	if b < 24 {
-		return "N"
-		//fmt.Println(b)
-	}
-	if b < 69 {
-		return "NE"
-	}
-	if b < 114 {
-		return "E"
-	}
-	if b < 159 {
-		return "SE"
-	}
-	if b < 204 {
-		return "S"
-	}
-	if b < 249 {
-		return "SW"
-	}
-	if b < 294 {
-		return "W"
-	}
-	if b < 337 {
-		return "NW"
-	}
-	if b < 361 {
-		return "N"
-	}
-	return "?"
-}
-
-// takes data from APIs and formats a response
-func parseForecast(wave SurflineWaveForecast, wind SurflineWindForecast, tide TideAndWeatherChart) string {
-	bd := getBuoyData()
-	responseText := "```------------------------------------------------------------------------\n"
-	responseText += "Current Buoy 411112 Data\n"
-	responseText += "Wave Height: " + fmt.Sprint(bd.WaveHeight) + " ft"
-	responseText += "\nSwell Period: " + bd.SwellPeriod + " seconds"
-	responseText += "\nWind: " + fmt.Sprint(math.Round(mphFromKnots(wind.Data.Wind[0].Speed))) + "mph " + convertDirection(wind.Data.Wind[0].Direction)
-	responseText += "\n---------------------------------------------------------------------------------------\n"
-	//Surf Forecast from Surfline
-	for i, conditions := range wave.Data.Conditions {
-		//ensure there is a response
-		if conditions.Am.Rating != "" {
-			if i < 3 {
-				//surfline conditions forecast comes in days, wind and tide come in hours
-				x := (i * 24) + 7
-				y := (i * 24) + 14
-				//	z := i*24
-				//	p := (2*i)
-				//	q := (2*i)
-				amWindLow := math.Round(mphFromKnots(wind.Data.Wind[x].Speed))
-				amWindHigh := math.Round(mphFromKnots(wind.Data.Wind[x].Gust))
-				amWindDir := convertDirection(wind.Data.Wind[x].Direction)
-				pmWindLow := math.Round(mphFromKnots(wind.Data.Wind[y].Speed))
-				pmWindHigh := math.Round(mphFromKnots(wind.Data.Wind[y].Gust))
-				pmWindDir := convertDirection(wind.Data.Wind[y].Direction)
-				//filter out non gusty wind so it doesn't display like 7-7mph
-				var amWindReport string
-				if amWindHigh == amWindLow {
-					amWindReport = fmt.Sprint(amWindHigh, "mph ", amWindDir)
-				} else {
-					amWindReport = fmt.Sprint(amWindLow, "-", amWindHigh, "mph ", amWindDir)
-				}
-				var pmWindReport string
-				if pmWindHigh == pmWindLow {
-					pmWindReport = fmt.Sprint(pmWindHigh, "mph ", pmWindDir)
-				} else {
-					pmWindReport = fmt.Sprint(pmWindLow, "-", pmWindHigh, "mph ", pmWindDir)
-				}
-				forecastTime, err := time.Parse("2006-01-02", conditions.ForecastDay)
-				if err != nil {
-					fmt.Println("Could not parse time:", err)
-				}
-				forecastDayOfWeek := fmt.Sprint(forecastTime.Weekday())
-
-				amPrimarySwells := tide.Data.Forecasts[2*i].Swells
-				pmPrimarySwells := tide.Data.Forecasts[5*i].Swells
-				//sort by biggest swell to report primary swell/period
-				sort.Slice(amPrimarySwells, func(i, j int) bool {
-					return amPrimarySwells[i].Height > amPrimarySwells[j].Height
-				})
-				sort.Slice(pmPrimarySwells, func(i, j int) bool {
-					return pmPrimarySwells[i].Height > pmPrimarySwells[j].Height
-				})
-
-				//build response
-				responseText += forecastDayOfWeek + "\t\t" + conditions.ForecastDay[5:] + "\n\n" +
-					fmt.Sprint(conditions.Observation, "\n\n") +
-					"am: " + fmt.Sprint(conditions.Am.MinHeight) +
-					"-" + fmt.Sprint(conditions.Am.MaxHeight) + "ft  " +
-					fmt.Sprint(conditions.Am.HumanRelation) +
-					"\tprimary swell: " + fmt.Sprint(math.Floor(amPrimarySwells[0].Height*10)/10, "ft@", amPrimarySwells[0].Period, "sec") +
-					"\twind: " + amWindReport +
-					"\t\trating: " + conditions.Am.Rating +
-					"\npm: " + fmt.Sprint(conditions.Pm.MinHeight) +
-					"-" + fmt.Sprint(conditions.Pm.MaxHeight) + "ft  " +
-					fmt.Sprint(conditions.Pm.HumanRelation) +
-					"\tprimary swell: " + fmt.Sprint(math.Floor(pmPrimarySwells[0].Height*10)/10, "ft@", pmPrimarySwells[0].Period, "sec") +
-					"\twind: " + pmWindReport +
-					"\t\trating: " + conditions.Pm.Rating + "\n" +
-					"--------------------------------------------------------------------------------------------------------------\n"
-			}
-		}
-	}
-	responseText += "```"
-	return responseText
-}
-
-func getSurflineWaveForecast() SurflineWaveForecast {
-	url := "https://services.surfline.com/kbyg/regions/forecasts/conditions?subregionId=5e556e9231e571b1a21d34a0"
-	client := &http.Client{Timeout: 20 * time.Second}
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-	}
-	responseData, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer resp.Body.Close()
-	var sf SurflineWaveForecast
-	err = json.Unmarshal(responseData, &sf)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println("wave forecast OK")
-	return sf
-}
-
-func getSurflineWindForecast() SurflineWindForecast {
-	url := "https://services.surfline.com/kbyg/spots/forecasts/wind?spotId=" + JaxBeachPierSpotID
-	client := &http.Client{Timeout: 20 * time.Second}
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-	}
-	responseData, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer resp.Body.Close()
-	var sf SurflineWindForecast
-	err = json.Unmarshal(responseData, &sf)
-	if err != nil {
-		fmt.Println(err)
-		if e, ok := err.(*json.SyntaxError); ok {
-			fmt.Printf("syntax error at byte offset %d\n", e.Offset)
-		}
-		fmt.Printf("sakura response: %q\n", responseData)
-		fmt.Println(err)
-	}
-	fmt.Println("wind forecast OK")
-	return sf
-}
-
-type TideAndWeatherChart struct {
-	Data struct {
-		SunriseSunsetTimes []struct {
-			Midnight int `json:"midnight"`
-			Sunrise  int `json:"sunrise"`
-			Sunset   int `json:"sunset"`
-		} `json:"sunriseSunsetTimes"`
-		TideLocation struct {
-			Name string  `json:"name"`
-			Min  float64 `json:"min"`
-			Max  float64 `json:"max"`
-			Lon  float64 `json:"lon"`
-			Lat  float64 `json:"lat"`
-			Mean int     `json:"mean"`
-		} `json:"tideLocation"`
-		Forecasts []struct {
-			Timestamp int `json:"timestamp"`
-			Weather   struct {
-				Temperature int    `json:"temperature"`
-				Condition   string `json:"condition"`
-			} `json:"weather"`
-			Wind struct {
-				Speed     float64 `json:"speed"`
-				Direction float64 `json:"direction"`
-			} `json:"wind"`
-			Surf struct {
-				Min float64 `json:"min"`
-				Max float64 `json:"max"`
-			} `json:"surf"`
-			Swells []struct {
-				Height       float64 `json:"height"`
-				Direction    float64 `json:"direction"`
-				DirectionMin float64 `json:"directionMin"`
-				Period       int     `json:"period"`
-			} `json:"swells"`
-		} `json:"forecasts"`
-		Tides []struct {
-			Timestamp int     `json:"timestamp"`
-			Type      string  `json:"type"`
-			Height    float64 `json:"height"`
-		} `json:"tides"`
-	} `json:"data"`
-}
-
-func tideAndWeather() TideAndWeatherChart {
-	url := "https://services.surfline.com/kbyg/spots/forecasts/?spotId=5842041f4e65fad6a7708aa0"
-	client := &http.Client{Timeout: 20 * time.Second}
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-	}
-	responseData, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer resp.Body.Close()
-	var weather TideAndWeatherChart
-	err = json.Unmarshal(responseData, &weather)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return weather
+type TideData struct {
+	Predictions []TidePrediction `json:"predictions"`
 }
 
 func getBuoyData() BuoyData {
@@ -316,36 +33,203 @@ func getBuoyData() BuoyData {
 	req, _ := http.NewRequest("GET", url, nil)
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error fetching buoy data:", err)
+		return BuoyData{}
 	}
 	defer resp.Body.Close()
 
 	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error reading buoy response:", err)
+		return BuoyData{}
 	}
 
 	responseString := string(responseData)
 	lines := strings.Split(responseString, "\n")
-	latestReading := lines[2]
-	data := strings.Split(latestReading, " ")
+	if len(lines) < 3 {
+		fmt.Println("Error: Buoy data file does not contain enough lines")
+		return BuoyData{}
+	}
 
-	wh := data[15]
-	whint, _ := strconv.ParseFloat(wh, 64)
-	ft := whint * 3.28084
-	whft := math.Round(ft*100) / 100
+	latestReading := lines[2]
+	data := strings.Fields(latestReading) // Use Fields to handle multiple spaces
+
+	// Ensure the data slice has enough elements
+	if len(data) < 17 {
+		fmt.Println("Error: Buoy data line does not contain enough fields")
+		return BuoyData{}
+	}
+
+	// Parse wave height (WVHT)
+	wvht := data[8]
+	wvhtFloat, err := strconv.ParseFloat(wvht, 64)
+	if err != nil {
+		fmt.Println("Error parsing wave height:", err)
+		return BuoyData{}
+	}
+	waveHeightFt := math.Round(wvhtFloat*3.28084*100) / 100 // Convert meters to feet
+
+	// Parse swell period (DPD)
+	swellPeriod := data[9]
+
+	// Parse water temperature (WTMP) and convert to Fahrenheit
+	wtmp := data[14]
+	wtmpFloat, err := strconv.ParseFloat(wtmp, 64)
+	if err != nil {
+		fmt.Println("Error parsing water temperature:", err)
+		return BuoyData{}
+	}
+	waterTempF := math.Round(wtmpFloat*1.8 + 32) // Convert Celsius to Fahrenheit and round to nearest integer
+
+	// Return the parsed data
 	report := BuoyData{
-		WaveHeight:  whft,
-		SwellPeriod: data[20],
+		WaveHeight:  waveHeightFt,
+		SwellPeriod: swellPeriod,
+		WaterTemp:   waterTempF,
 	}
 	return report
 }
 
-func getSurflineForecast() string {
-	waveForecastData := getSurflineWaveForecast()
-	windForecastData := getSurflineWindForecast()
-	tideAndWeatherData := tideAndWeather()
-	parsedResult := parseForecast(waveForecastData, windForecastData, tideAndWeatherData)
+func getWindData() (float64, string) {
+	url := "https://api.weather.gov/gridpoints/JAX/57,74/forecast"
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("User-Agent", "Go-http-client/1.1") // Required by the NWS API
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error fetching wind data:", err)
+		return 0, "N/A"
+	}
+	defer resp.Body.Close()
 
-	return parsedResult
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading wind response:", err)
+		return 0, "N/A"
+	}
+
+	var forecast map[string]interface{}
+	err = json.Unmarshal(responseData, &forecast)
+	if err != nil {
+		fmt.Println("Error parsing wind data:", err)
+		return 0, "N/A"
+	}
+
+	// Extract wind data from the forecast
+	properties := forecast["properties"].(map[string]interface{})
+	periods := properties["periods"].([]interface{})
+	firstPeriod := periods[0].(map[string]interface{})
+	windSpeed := firstPeriod["windSpeed"].(string) // Example: "10 mph"
+	windDirection := firstPeriod["windDirection"].(string)
+
+	// Parse wind speed (strip " mph" and convert to float)
+	windSpeedValue, err := strconv.ParseFloat(strings.Split(windSpeed, " ")[0], 64)
+	if err != nil {
+		fmt.Println("Error parsing wind speed:", err)
+		return 0, "N/A"
+	}
+
+	return windSpeedValue, windDirection
+}
+
+// func convertDirection(bearing string) string {
+// 	b, err := strconv.Atoi(bearing)
+// 	if err != nil {
+// 		return "?"
+// 	}
+// 	switch {
+// 	case float64(b) >= 348.75 || float64(b) < 11.25:
+// 		return "N"
+// 	case float64(b) >= 11.25 && float64(b) < 33.75:
+// 		return "NNE"
+// 	case float64(b) >= 33.75 && float64(b) < 56.25:
+// 		return "NE"
+// 	case float64(b) >= 56.25 && float64(b) < 78.75:
+// 		return "ENE"
+// 	case float64(b) >= 78.75 && float64(b) < 101.25:
+// 		return "E"
+// 	case float64(b) >= 101.25 && float64(b) < 123.75:
+// 		return "ESE"
+// 	case float64(b) >= 123.75 && float64(b) < 146.25:
+// 		return "SE"
+// 	case float64(b) >= 146.25 && float64(b) < 168.75:
+// 		return "SSE"
+// 	case float64(b) >= 168.75 && float64(b) < 191.25:
+// 		return "S"
+// 	case float64(b) >= 191.25 && float64(b) < 213.75:
+// 		return "SSW"
+// 	case float64(b) >= 213.75 && float64(b) < 236.25:
+// 		return "SW"
+// 	case float64(b) >= 236.25 && float64(b) < 258.75:
+// 		return "WSW"
+// 	case float64(b) >= 258.75 && float64(b) < 281.25:
+// 		return "W"
+// 	case float64(b) >= 281.25 && float64(b) < 303.75:
+// 		return "WNW"
+// 	case float64(b) >= 303.75 && float64(b) < 326.25:
+// 		return "NW"
+// 	case float64(b) >= 326.25 && float64(b) < 348.75:
+// 		return "NNW"
+// 	default:
+// 		return "?"
+// 	}
+// }
+
+func getTideData() []TidePrediction {
+	stationID := "8720291" // Jacksonville Beach, FL
+	now := time.Now()
+	beginDate := now.Format("20060102")
+	endDate := now.Format("20060102")
+
+	url := fmt.Sprintf("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=NOS.COOPS.TAC.WL&begin_date=%s&end_date=%s&datum=MLLW&station=%s&time_zone=lst_ldt&units=english&interval=hilo&format=json", beginDate, endDate, stationID)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(url)
+	if err != nil {
+		fmt.Println("Error fetching tide data:", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading tide response:", err)
+		return nil
+	}
+
+	var tideData TideData
+	err = json.Unmarshal(responseData, &tideData)
+	if err != nil {
+		fmt.Println("Error parsing tide data:", err)
+		return nil
+	}
+
+	return tideData.Predictions
+}
+
+func getSurfData() string {
+	bd := getBuoyData()
+	tides := getTideData()
+	windSpeed, windDir := getWindData()
+
+	responseText := "```---\n"
+	responseText += "Current Surf Conditions:\n"
+	responseText += "Wave Height: " + fmt.Sprintf("%.2f", bd.WaveHeight) + " ft"
+	responseText += "\nSwell Period: " + bd.SwellPeriod + " seconds"
+	responseText += "\nWater Temp: " + fmt.Sprintf("%.0f", bd.WaterTemp) + " °F"
+	responseText += "\nWind Speed: " + fmt.Sprintf("%.0f", windSpeed) + " mph"
+	responseText += "\nWind Direction: " + windDir
+	responseText += "\nTides:\n"
+
+	for _, tide := range tides {
+		tideTime, err := time.Parse("2006-01-02 15:04", tide.Time)
+		if err != nil {
+			fmt.Println("Error parsing tide time:", err)
+			continue
+		}
+		responseText += fmt.Sprintf("%s Tide at %s\n", strings.Title(tide.Level), tideTime.Format("03:04 PM"))
+	}
+
+	responseText += "```"
+	return responseText
 }

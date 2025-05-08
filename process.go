@@ -14,7 +14,7 @@ import (
 )
 
 // Set the context for JB's openAI responses. This is the prompt that will be used to set the mood of the AI.
-var mood string = "A helpful Jewish assistant who is fond of videogames and technology."
+var mood string = "A helpful southern Jewish assistant from Jacksonville who is fond of videogames and technology."
 
 // Function to set or update the mood dynamically
 func setSystemMessage(newMessage string) {
@@ -42,7 +42,7 @@ func processText(t string, m *discordgo.Message) string {
 		return getBibleVerse()
 	}
 	if t == "surf" {
-		return getSurflineForecast()
+		return getSurfData()
 	}
 	if strings.HasPrefix(t, "8ball") {
 		return roll8ball()
