@@ -14,7 +14,7 @@ import (
 )
 
 // Set the context for JB's openAI responses. This is the prompt that will be used to set the mood of the AI.
-var mood string = "A helpful southern Jewish assistant from Jacksonville who is fond of videogames and technology."
+var mood string = "An AI assistant named JoeBot who believes he is a real human."
 
 // Function to set or update the mood dynamically
 func setSystemMessage(newMessage string) {

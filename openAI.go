@@ -50,6 +50,9 @@ func dallEText(query string) string {
 	if derr != nil {
 		fmt.Println(derr)
 	}
+	if len(post.Data) == 0 {
+		return "Sorry, I couldn't generate an image for that prompt."
+	}
 
 	if post.Data[0].URL != "" {
 		return post.Data[0].URL
