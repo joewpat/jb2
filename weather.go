@@ -23,7 +23,7 @@ type Forecast struct {
 func weatherForecast() string {
 
 	// JAX forecast endpoint
-	const apiEndpoint = "https://api.weather.gov/gridpoints/JAX/66,65/forecast"
+	const apiEndpoint = "https://api.weather.gov/gridpoints/JAX/67,66/forecast"
 	// Make the HTTP request
 	response, err := http.Get(apiEndpoint)
 	if err != nil {

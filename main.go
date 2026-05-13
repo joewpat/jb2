@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"os/signal"
 	"strings"
@@ -66,7 +67,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		go func() {
 			s.ChannelTyping(m.ChannelID)
 		}()
-		resp := processText(text, m.Message)
+		resp := processText(s, text, m.Message)
 		fmt.Println("Final Reply: \n", resp+"\n")
 		s.ChannelMessageSend(m.ChannelID, resp)
 	} else if strings.Contains(strings.ToLower(m.Content), "another one") {
@@ -77,6 +78,18 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		resp := djKhaledGif()
 		s.ChannelMessageSend(m.ChannelID, resp)
 		return
+	} else {
+		// Random chance to respond to any message (5% probability)
+		rand.Seed(time.Now().UnixNano())
+		if rand.Float64() < 0.05 {
+			fmt.Println("randomly responding to:", m.Content)
+			go func() {
+				s.ChannelTyping(m.ChannelID)
+			}()
+			resp := processText(s, m.Content, m.Message)
+			fmt.Println("Random Reply: \n", resp+"\n")
+			s.ChannelMessageSend(m.ChannelID, resp)
+		}
 	}
 }
 

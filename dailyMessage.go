@@ -28,16 +28,8 @@ func dailyMessage(token string, channelID string) {
 
 	greeting := fmt.Sprintf("Good morning! Today is %s, %s %d.\n", dotw, month, day)
 	forecast := weatherForecast()
-	genZforecast := gpt("Translate this forecast to Gen Z lingo: "+forecast, "Super hip Gen Z meteorologist.")
-	//bquote := getBibleVerse()
+	genAlphaForecast := gpt("Translate this weather forecast in Gen alpha lingo, and shorten it to just two sentences. Emoji use is encouraged.: "+forecast, "Super hip Gen Alpha meteorologist.")
 	wotd := GetWordOfTheDay()
-	//dayGif := searchGifs(dotw.String() + "blessings")
-	//deepthought := getDeepThought()
-
-	// var choices []string
-	// choices = append(choices, bquote)
-	// choice := choices[rand.Intn(len(choices))]
-	// theme := "\nToday's bible verse is:\n" + choice
-	message := greeting + "\n" + genZforecast + "\n\n" + wotd + "\n" + getSurfData()
+	message := greeting + "\n" + genAlphaForecast + "\n\n" + wotd //+ "\n" + getSurfData()
 	dg.ChannelMessageSend(channelID, message)
 }

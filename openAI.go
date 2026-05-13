@@ -1,165 +1,164 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
+	"encoding/base64"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"net/http"
 	"os"
+	"strings"
+	"sync"
 	"time"
+
+	openai "github.com/sashabaranov/go-openai"
 )
 
-var openAiKey = os.Getenv("OPEN_AI_KEY")
+var (
+	openAiKey  = os.Getenv("OPENAI_API_KEY")
+	oaClient   *openai.Client
+	clientOnce sync.Once
+)
 
-// Dall-E image generation based on text query
-func dallEText(query string) string {
-	type Dalle struct {
-		Created int `json:"created"`
-		Data    []struct {
-			URL string `json:"url"`
-		} `json:"data"`
-	}
-
-	client := &http.Client{Timeout: 120 * time.Second}
-
-	requestBody := fmt.Sprintf(`{
-	"prompt": "%s",
-	"model": "dall-e-3",
-	"quality": "hd",
-	"n": 1,
-	"size": "1024x1024"
-	}`, query)
-
-	sendLog(requestBody)
-
-	req, _ := http.NewRequest("POST", "https://api.openai.com/v1/images/generations", bytes.NewBuffer([]byte(requestBody)))
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+openAiKey)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
-	defer resp.Body.Close()
-
-	post := &Dalle{}
-	derr := json.NewDecoder(resp.Body).Decode(post)
-	if derr != nil {
-		fmt.Println(derr)
-	}
-
-	if post.Data[0].URL != "" {
-		return post.Data[0].URL
-	}
-
-	return "I cannot"
+func getOpenAIClient() *openai.Client {
+	clientOnce.Do(func() {
+		oaClient = openai.NewClient(openAiKey)
+	})
+	return oaClient
 }
 
-//new openAI function - gpt-4o-mini
-
-// OpenAI API endpoint
-const openAIURL = "https://api.openai.com/v1/chat/completions"
-
-// OpenAIRequest struct defines the input to OpenAI API
-type OpenAIChatRequest struct {
-	Model       string    `json:"model"`
-	Messages    []Message `json:"messages"`
-	MaxTokens   int       `json:"max_tokens"`
-	Temperature float64   `json:"temperature"`
+// Allow aliases; do not silently downgrade gpt-5
+var modelAlias = map[string]string{
+	"gpt-5":   "gpt-5",
+	"gpt5":    "gpt-5",
+	"gpt-4o":  "gpt-4o",
+	"gpt4":    "gpt-4o",
+	"gpt-4":   "gpt-4o",
+	"default": "gpt-4o",
 }
 
-// Message struct for chat messages
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+func resolveModel(name string) string {
+	name = strings.TrimSpace(strings.ToLower(name))
+	if name == "" {
+		return modelAlias["default"]
+	}
+	if m, ok := modelAlias[name]; ok {
+		return m
+	}
+	return name // allow raw model ids
 }
 
-// OpenAIResponse struct defines the structure of the response from OpenAI API
-type OpenAIChatResponse struct {
-	ID      string `json:"id"`
-	Object  string `json:"object"`
-	Created int64  `json:"created"`
-	Model   string `json:"model"`
-	Choices []struct {
-		Message struct {
-			Role    string `json:"role"`
-			Content string `json:"content"`
-		} `json:"message"`
-	} `json:"choices"`
-}
+func runChat(model, userPrompt, systemPrompt string, maxTokens int, temperature float64) string {
+	if openAiKey == "" {
+		return "OpenAI key missing"
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	defer cancel()
 
-func gpt(query string, context string) string {
-	apiKey := openAiKey
-	fmt.Println("API KEY: ", apiKey)
-	fmt.Println(query)
+	resolved := resolveModel(model)
 
-	// Create the request payload
-	reqBody := OpenAIChatRequest{
-		Model: "gpt-4",
-		Messages: []Message{
-			{
-				Role:    "system",
-				Content: context,
-			},
-			{
-				Role:    "user",
-				Content: query,
-			},
+	req := openai.ChatCompletionRequest{
+		Model: resolved,
+		Messages: []openai.ChatCompletionMessage{
+			{Role: openai.ChatMessageRoleSystem, Content: systemPrompt},
+			{Role: openai.ChatMessageRoleUser, Content: userPrompt},
 		},
-		MaxTokens:   5000,
-		Temperature: 0.7,
 	}
 
-	fmt.Println("Using mood: ", context)
+	// Token field: gpt-5 uses MaxCompletionTokens, others use MaxTokens
+	if strings.HasPrefix(resolved, "gpt-5") {
+		req.MaxCompletionTokens = maxTokens
+		// Do NOT set Temperature / TopP / N / PresencePenalty / FrequencyPenalty (fixed by model)
+	} else {
+		req.MaxTokens = maxTokens
+		req.Temperature = float32(temperature)
+		// (Optionally set other tuning params here for non–gpt-5 models)
+	}
 
-	// Convert struct to JSON
-	jsonData, err := json.Marshal(reqBody)
+	resp, err := getOpenAIClient().CreateChatCompletion(ctx, req)
 	if err != nil {
-		log.Fatalf("Failed to marshal request: %v", err)
+		return fmt.Sprintf("OpenAI error: %v", err)
+	}
+	if len(resp.Choices) == 0 {
+		return "No completion returned"
+	}
+	out := resp.Choices[0].Message.Content
+	if out == "" {
+		return "Empty response"
+	}
+	if len(out) > 2000 {
+		out = out[:2000]
+	}
+	return out
+}
+
+// helper removed: MaxCompletionTokens is an int in this SDK, so a pointer helper is unnecessary.
+
+// Backwards compatible primary function
+func gpt(query string, contextMsg string) string {
+	return runChat("gpt-4o", query, contextMsg, 5000, 0.7)
+}
+
+// Custom model variant
+func gptModel(model string, query string, contextMsg string) string {
+	return runChat(model, query, contextMsg, 4000, 0.7)
+}
+
+// generateImageContent tries URL first (no response_format to avoid 400), then falls back to base64.
+// Returns (url, bytes, error). If url != "", bytes will be nil.
+func generateImageContent(prompt string) (string, []byte, error) {
+	if openAiKey == "" {
+		return "", nil, fmt.Errorf("OpenAI key missing")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	defer cancel()
+
+	client := getOpenAIClient()
+
+	// FIRST ATTEMPT: Do NOT set ResponseFormat (gpt-image-1 rejects response_format=url -> 400)
+	req := openai.ImageRequest{
+		Model:  "dall-e-3",
+		Prompt: prompt,
+		N:      1,
+		Size:   openai.CreateImageSize1024x1024,
+		// Leave ResponseFormat empty (defaults to URL if supported)
 	}
 
-	// Create HTTP request
-	req, err := http.NewRequest("POST", openAIURL, bytes.NewBuffer(jsonData))
+	resp, err := client.CreateImage(ctx, req)
 	if err != nil {
-		log.Fatalf("Failed to create request: %v", err)
+		return "", nil, fmt.Errorf("image generation error: %w", err)
+	}
+	if len(resp.Data) > 0 && resp.Data[0].URL != "" {
+		return resp.Data[0].URL, nil, nil
 	}
 
-	// Set headers
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiKey))
-
-	// Make the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	// FALLBACK: Ask specifically for base64
+	req.ResponseFormat = openai.CreateImageResponseFormatB64JSON
+	resp, err = client.CreateImage(ctx, req)
 	if err != nil {
-		log.Fatalf("Failed to send request: %v", err)
+		return "", nil, fmt.Errorf("image (b64) generation error: %w", err)
 	}
-	defer resp.Body.Close()
+	if len(resp.Data) == 0 || resp.Data[0].B64JSON == "" {
+		return "", nil, fmt.Errorf("no image content returned")
+	}
 
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
+	raw, err := base64.StdEncoding.DecodeString(resp.Data[0].B64JSON)
 	if err != nil {
-		log.Fatalf("Failed to read response: %v", err)
+		return "", nil, fmt.Errorf("base64 decode failed: %w", err)
 	}
+	return "", raw, nil
+}
 
-	//fmt.Println("Response body: ", string(body))
-
-	// Unmarshal the response into OpenAIResponse struct
-	var apiResponse OpenAIChatResponse
-	err = json.Unmarshal(body, &apiResponse)
+// Backward compatible simple helper
+func generateImage(prompt string) string {
+	url, _, err := generateImageContent(prompt)
 	if err != nil {
-		log.Fatalf("Failed to unmarshal response: %v", err)
+		return fmt.Sprintf("Image generation error: %v", err)
 	}
-
-	//fmt.Println("Response: ", apiResponse)
-
-	// Return the result
-	responseContent := apiResponse.Choices[0].Message.Content
-	if len(responseContent) > 2000 {
-		return responseContent[:2000]
+	if url == "" {
+		return "Image generated (no direct URL); internal upload used."
 	}
-	return responseContent
+	return url
+}
+
+func dallEText(prompt string) string {
+	return generateImage(prompt)
 }
