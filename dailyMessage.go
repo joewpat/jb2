@@ -28,8 +28,8 @@ func dailyMessage(token string, channelID string) {
 
 	greeting := fmt.Sprintf("Good morning! Today is %s, %s %d.\n", dotw, month, day)
 	forecast := weatherForecast()
-	genAlphaForecast := gpt("Translate this weather forecast in Gen alpha lingo, and shorten it to just two sentences. Emoji use is encouraged.: "+forecast, "Super hip Gen Alpha meteorologist.")
+	//genAlphaForecast := gpt("Translate this weather forecast in Gen alpha lingo, and shorten it to just two sentences. Emoji use is encouraged.: "+forecast, "Super hip Gen Alpha meteorologist.")
 	wotd := GetWordOfTheDay()
-	message := greeting + "\n" + genAlphaForecast + "\n\n" + wotd //+ "\n" + getSurfData()
+	message := greeting + "\n" + forecast + "\n\n" + wotd //+ "\n" + getSurfData()
 	dg.ChannelMessageSend(channelID, message)
 }

@@ -43,6 +43,21 @@ func setModel(name string) string {
 	return "model set to: " + currentModel
 }
 
+// getRandomQuerySubstring returns a random portion of the query (word or phrase)
+func getRandomQuerySubstring(query string) string {
+	words := strings.Fields(query)
+	if len(words) == 0 {
+		return query
+	}
+
+	// Pick a random starting word
+	start := rand.Intn(len(words))
+	// Pick a random ending word (inclusive, after start)
+	end := start + rand.Intn(len(words)-start) + 1
+
+	return strings.Join(words[start:end], " ")
+}
+
 func processText(s *discordgo.Session, t string, m *discordgo.Message) string {
 	rand.Seed(time.Now().UnixNano()) //init random
 	if t == "" {
@@ -147,9 +162,10 @@ func processText(s *discordgo.Session, t string, m *discordgo.Message) string {
 		return SearchRedditRandomComment(query)
 	}
 
-	// Final fallback: Randomly pick between YouTube and Reddit
+	// Final fallback: Randomly pick between YouTube and Reddit with random query substring
+	randomQuery := getRandomQuerySubstring(t)
 	if rand.Intn(2) == 0 {
-		return SearchYouTubeRandomComment(t)
+		return SearchYouTubeRandomComment(randomQuery)
 	}
-	return SearchRedditRandomComment(t)
+	return SearchRedditRandomComment(randomQuery)
 }
