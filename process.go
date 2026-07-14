@@ -58,6 +58,37 @@ func getRandomQuerySubstring(query string) string {
 	return strings.Join(words[start:end], " ")
 }
 
+func shouldSendReply(resp string) bool {
+	if strings.TrimSpace(resp) == "" {
+		return false
+	}
+
+	noResultPhrases := []string{
+		"not found for this prompt",
+		"what?",
+		"no youtube videos found",
+		"no comments found in those videos",
+		"no reddit threads found",
+		"no comments found in those threads",
+		"no gifs found",
+		"couldn't search youtube",
+		"couldn't reach reddit",
+		"i need something to search for",
+		"openai key missing",
+		"empty response",
+		"no completion returned",
+	}
+
+	lowerResp := strings.ToLower(resp)
+	for _, phrase := range noResultPhrases {
+		if strings.Contains(lowerResp, phrase) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func processText(s *discordgo.Session, t string, m *discordgo.Message) string {
 	rand.Seed(time.Now().UnixNano()) //init random
 	if t == "" {

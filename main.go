@@ -69,7 +69,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}()
 		resp := processText(s, text, m.Message)
 		fmt.Println("Final Reply: \n", resp+"\n")
-		s.ChannelMessageSend(m.ChannelID, resp)
+		if shouldSendReply(resp) {
+			s.ChannelMessageSend(m.ChannelID, resp)
+		}
 	} else if strings.Contains(strings.ToLower(m.Content), "another one") {
 		//dj khaled gif search
 		go func() {
@@ -88,7 +90,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}()
 			resp := processText(s, m.Content, m.Message)
 			fmt.Println("Random Reply: \n", resp+"\n")
-			s.ChannelMessageSend(m.ChannelID, resp)
+			if shouldSendReply(resp) {
+				s.ChannelMessageSend(m.ChannelID, resp)
+			}
 		}
 	}
 }
